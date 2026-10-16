@@ -1,0 +1,518 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#11182d">
+<title>Facturas Mihai | Gestión profesional</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
+<style>
+:root{--navy:#11182d;--orange:#e88913;--ink:#20283a;--muted:#737e91;--line:#e0e5ed;--bg:#f3f5f9;--white:#fff;--red:#a72e38;--green:#19765d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Arial,Helvetica,sans-serif}
+button,input,select,textarea{font:inherit}
+button{border:0;border-radius:9px;padding:11px 15px;font-weight:700;cursor:pointer;min-height:42px}
+button:disabled{opacity:.55;cursor:wait}
+.primary{background:var(--navy);color:#fff}.orange{background:var(--orange);color:#fff}
+.light{background:#edf0f5;color:var(--navy)}.danger{background:#fff0f0;color:var(--red)}
+.success{background:var(--green);color:white}
+header{background:var(--navy);color:#fff;padding:20px max(16px,calc((100% - 1250px)/2));border-bottom:5px solid var(--orange)}
+header h1{font-size:23px;margin:0}header p{margin:4px 0 0;color:#d7deeb}
+main{max-width:1250px;margin:auto;padding:20px}
+.panel{background:white;border:1px solid var(--line);border-radius:15px;padding:21px;margin-bottom:18px;box-shadow:0 4px 20px #10182d08}
+h2{font-size:21px;margin:0 0 14px}h3{font-size:16px;margin:0 0 12px}
+.muted{color:var(--muted)}.small{font-size:12px}.hidden{display:none!important}
+.toolbar,.actions{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.full{grid-column:1/-1}label{font-weight:700;font-size:13px}
+input,select,textarea{width:100%;padding:11px;border:1px solid #cbd3df;border-radius:8px;background:white;color:var(--ink);min-height:43px}
+textarea{min-height:76px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid #f5c57d;border-color:var(--orange)}
+.status{padding:12px 14px;background:#e9f5ee;border-radius:9px;margin:0 0 15px;white-space:pre-wrap}
+.status.error{background:#fff0f0;color:#942b32}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.stat{background:#f7f8fb;border:1px solid var(--line);border-radius:12px;padding:14px}
+.stat strong{display:block;font-size:22px;margin-top:5px}
+.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:700px}
+th,td{padding:11px 9px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+th{background:#f0f2f6;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+.right{text-align:right}.pill{display:inline-block;padding:4px 8px;border-radius:20px;font-size:12px;font-weight:bold;background:#edf0f5}
+.pill.draft{background:#fff0d8;color:#895300}.pill.issued{background:#e2f5e9;color:#17643d}.pill.void{background:#ffeded;color:#a32e35}
+.itemrow{display:grid;grid-template-columns:minmax(180px,3fr) 80px 115px 90px 115px 42px;gap:8px;align-items:end;margin-bottom:10px}
+.itemrow label{font-size:11px}.itemrow input,.itemrow select{padding:9px 7px}
+.removeitem{background:#fff0f0;color:#a72e38;padding:8px}
+.totals{margin-left:auto;width:min(100%,390px);border:1px solid var(--line);border-radius:12px;padding:15px}
+.total-line{display:flex;justify-content:space-between;gap:12px;padding:6px 0}
+.grand{margin:9px -15px -15px;background:var(--navy);color:#fff;padding:15px;border-radius:0 0 11px 11px;display:flex;justify-content:space-between;font-weight:bold;font-size:20px}
+.preview-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+#paper{background:white;color:#20283a;width:100%;max-width:850px;margin:0 auto;padding:36px 38px;border:1px solid #e3e5eb;box-shadow:0 5px 25px #10182d0d;min-height:800px}
+.paper-top{height:7px;background:var(--orange);margin:-36px -38px 28px}
+.paper-head{display:flex;justify-content:space-between;gap:22px;align-items:flex-start;padding-bottom:20px;border-bottom:2px solid var(--navy)}
+.brand{display:flex;gap:13px;align-items:center}.mark{width:53px;height:53px;background:var(--orange);color:white;border-radius:13px;display:grid;place-items:center;font-weight:900;font-size:18px}
+.brand h2{margin:0;font-size:20px}.brand p{margin:4px 0;color:#697487;font-size:11px;letter-spacing:1px;font-weight:bold}
+.doc{text-align:right;min-width:180px}.doc-tag{display:inline-block;background:var(--navy);color:white;border-radius:20px;padding:5px 13px;font-size:11px;font-weight:bold;letter-spacing:2px}
+.doc-number{font-size:25px;font-weight:800;margin:6px 0}.doc-meta{font-size:12px;color:#687286;line-height:1.8}.doc-meta strong{color:var(--ink)}
+.parties{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:22px 0}
+.party{border:1px solid var(--line);border-top:4px solid var(--orange);border-radius:13px;padding:15px;min-height:155px;overflow-wrap:anywhere}
+.party.client{border-top-color:var(--navy)}
+.party-title{font-size:11px;font-weight:bold;letter-spacing:1.5px;color:#a9560c;margin-bottom:10px}
+.party.client .party-title{color:var(--navy)}
+.party strong{display:block;margin-bottom:7px;font-size:14px}
+.party-lines{font-size:12px;line-height:1.8;color:#485367;white-space:pre-line}
+.workbox{background:#fbfbfd;border:1px solid var(--line);border-left:4px solid var(--orange);border-radius:12px;padding:15px 17px;margin:18px 0}
+.workbox .label{font-size:11px;font-weight:bold;letter-spacing:1.5px;color:#a9560c;margin-bottom:7px}
+.workbox .desc{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px}
+.paper-table{width:100%;min-width:0;font-size:11px;border-collapse:collapse;margin:16px 0}
+.paper-table th{background:var(--navy);color:white;padding:10px 7px;letter-spacing:.03em}
+.paper-table td{padding:9px 7px;border-bottom:1px solid #e3e6ec;overflow-wrap:anywhere}
+.paper-table td:not(:first-child),.paper-table th:not(:first-child){text-align:right}
+.bottom-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;margin-top:17px}
+.bankbox{background:#fff7ed;border:1px solid #f3d6b1;border-radius:12px;padding:14px;font-size:12px;overflow-wrap:anywhere}
+.bankbox h3{font-size:11px;letter-spacing:1.4px;color:#a9560c}
+.bankbox p{margin:7px 0}
+.paper-totals{border:1px solid var(--line);border-radius:12px;overflow:hidden;align-self:start}
+.paper-totals .total-line{padding:10px 13px;font-size:12px}
+.paper-totals .grand{margin:0;border-radius:0;font-size:16px;padding:13px}
+.paper-notes{font-size:11px;color:#697487;margin-top:15px;white-space:pre-wrap;overflow-wrap:anywhere}
+.paper-footer{border-top:1px solid var(--line);margin-top:22px;padding-top:12px;display:flex;justify-content:space-between;gap:15px;font-size:10px;color:#758094}
+@media(max-width:760px){
+ main{padding:11px}.panel{padding:15px}.grid{grid-template-columns:1fr}.full{grid-column:auto}
+ .stats{grid-template-columns:1fr}.itemrow{grid-template-columns:1fr 1fr}
+ .itemrow .itemdesc{grid-column:1/-1}.parties,.bottom-grid{grid-template-columns:1fr}
+ #paper{padding:22px 17px;min-height:0}.paper-top{margin:-22px -17px 20px}
+ .paper-head{gap:10px}.brand{gap:8px}.mark{width:40px;height:40px}.brand h2{font-size:15px}
+ .brand p{font-size:8px}.doc{min-width:125px}.doc-number{font-size:18px}
+ .party{min-height:0}.paper-table{font-size:9px}.paper-table th,.paper-table td{padding:7px 4px}
+ .paper-footer{flex-direction:column}
+}
+@page{size:A4;margin:9mm}
+@media print{
+ body{background:white;font-size:10pt;color:#111}
+ body *{visibility:hidden!important}
+ #paper,#paper *{visibility:visible!important}
+ #paper{position:absolute;left:0;top:0;width:100%;max-width:none;min-height:0;margin:0;padding:0;border:0;box-shadow:none}
+ .paper-top{margin:0 0 7mm;height:2mm}
+ .paper-head{padding-bottom:4mm}.parties{margin:5mm 0;gap:4mm}
+ .party{padding:3mm;min-height:0}.workbox{margin:4mm 0;padding:3mm}
+ .paper-table{margin:4mm 0;font-size:8.5pt}
+ .paper-table th,.paper-table td{padding:2.2mm 1.5mm}
+ .bottom-grid{gap:4mm;margin-top:4mm}.bankbox{padding:3mm}
+ .paper-totals .total-line{padding:2.5mm 3mm}.paper-totals .grand{padding:3mm;font-size:12pt}
+ .paper-footer{margin-top:5mm;padding-top:3mm}
+ .paper-head,.parties,.workbox,.bottom-grid,.paper-footer{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Reformas Generales &amp; Limpieza Mihai</h1>
+  <p>Facturación profesional · Acceso privado para el equipo</p>
+</header>
+<main>
+  <div id="message" role="status" aria-live="polite"></div>
+
+  <section id="loginPanel" class="panel">
+    <h2>Acceso a facturación</h2>
+    <p class="muted">Inicia sesión con tu cuenta de empleado.</p>
+    <form id="loginForm" class="grid">
+      <div class="field full"><label>Correo electrónico</label><input id="loginEmail" type="email" autocomplete="username" required></div>
+      <div class="field full"><label>Contraseña</label><input id="loginPassword" type="password" autocomplete="current-password" required></div>
+      <div class="field full"><button class="primary" type="submit">Iniciar sesión</button></div>
+    </form>
+  </section>
+
+  <section id="appPanel" class="hidden">
+    <section class="panel">
+      <div class="toolbar">
+        <button class="primary" id="newBtn">＋ Nueva factura</button>
+        <button class="light" id="historyBtn">Gestor de facturas</button>
+        <button class="light" id="previewBtn">Vista previa</button>
+        <button class="light" id="reloadBtn">Actualizar</button>
+        <button class="danger" id="logoutBtn">Cerrar sesión</button>
+      </div>
+      <div class="muted small" id="userLabel"></div>
+    </section>
+
+    <section id="editorPanel" class="panel">
+      <h2 id="editorTitle">Nueva factura</h2>
+      <p class="muted small">Guarda un borrador para continuar más tarde. Emite la factura solo cuando hayas comprobado todos los datos.</p>
+      <form id="invoiceForm">
+        <div class="grid">
+          <div class="field"><label>Nombre del cliente *</label><input id="clientName" required></div>
+          <div class="field"><label>NIF / DNI / CIF</label><input id="clientTax"></div>
+          <div class="field full"><label>Dirección del cliente</label><input id="clientAddress"></div>
+          <div class="field"><label>Código postal</label><input id="clientPostal"></div>
+          <div class="field"><label>Población / provincia</label><input id="clientCity"></div>
+          <div class="field"><label>Fecha de emisión *</label><input id="issueDate" type="date" required></div>
+          <div class="field"><label>Vencimiento</label><input id="dueDate" type="date"></div>
+          <div class="field"><label>Forma de pago</label>
+            <select id="payment">
+              <option>Transferencia</option><option>Efectivo</option><option>Tarjeta</option><option>Bizum</option><option>Otro</option>
+            </select>
+          </div>
+          <div class="field"><label>Número de factura (opcional)</label><input id="invoiceNumber" type="number" min="1" step="1" placeholder="Automático si lo dejas vacío"><span class="muted small">Puedes indicar un número manual. Si lo dejas vacío, Supabase asignará el siguiente.</span></div>
+          <div class="field"><label>Estado al guardar</label>
+            <select id="saveStatus"><option value="draft">Borrador</option><option value="issued">Emitir factura</option></select>
+          </div>
+          <div class="field full"><label>Trabajo realizado / dirección de la obra *</label><textarea id="description" required placeholder="Ej.: trabajos de albañilería en la vivienda situada en..."></textarea></div>
+        </div>
+
+        <div style="margin-top:22px">
+          <div class="preview-toolbar"><h3>Conceptos y materiales</h3><button type="button" class="light" id="addItemBtn">＋ Añadir concepto</button></div>
+          <div id="itemsEditor"></div>
+        </div>
+
+        <div class="grid" style="margin-top:18px">
+          <div class="field"><label>Titular de la transferencia (opcional)</label><input id="bankHolder" placeholder="Mihai Hostinariu"></div>
+          <div class="field"><label>IBAN (opcional)</label><input id="bankIban" placeholder="ES..."></div>
+          <div class="field full"><label>Observaciones</label><textarea id="notes" placeholder="Información adicional para el cliente"></textarea></div>
+        </div>
+
+        <div class="totals" style="margin-top:20px">
+          <div class="total-line"><span>Base imponible</span><strong id="baseView">0,00 €</strong></div>
+          <div class="total-line"><span>IVA total</span><strong id="vatView">0,00 €</strong></div>
+          <div class="total-line"><span>Número de conceptos</span><strong id="itemsCount">0</strong></div>
+          <div class="grand"><span>TOTAL</span><span id="totalView">0,00 €</span></div>
+        </div>
+        <div class="actions" style="margin-top:18px">
+          <button class="primary" type="submit" id="saveBtn">Guardar borrador</button>
+          <button type="button" class="orange" id="saveIssueBtn">Guardar y emitir</button>
+          <button type="button" class="light" id="previewFromEditor">Previsualizar</button>
+          <button type="button" class="light" id="clearBtn">Nuevo / limpiar</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="historyPanel" class="panel hidden">
+      <h2>Gestor de facturas</h2>
+      <div class="stats">
+        <div class="stat"><span class="muted">Total de facturas</span><strong id="countAll">0</strong></div>
+        <div class="stat"><span class="muted">Borradores</span><strong id="countDraft">0</strong></div>
+        <div class="stat"><span class="muted">Emitidas</span><strong id="countIssued">0</strong></div>
+      </div>
+      <div class="grid">
+        <div class="field"><label>Buscar por número o cliente</label><input id="searchHistory" placeholder="Número o nombre"></div>
+        <div class="field"><label>Filtrar estado</label><select id="filterStatus"><option value="">Todos los estados</option><option value="draft">Borradores</option><option value="issued">Emitidas</option><option value="void">Anuladas</option></select></div>
+      </div>
+      <div class="table-wrap" style="margin-top:16px">
+        <table><thead><tr><th>Número</th><th>Fecha</th><th>Cliente</th><th>Importe</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="historyRows"></tbody></table>
+      </div>
+      <p class="muted small">Puedes ver, duplicar o eliminar facturas. El borrado definitivo requiere que las políticas SQL permitan eliminar cabeceras y conceptos. Conserva las facturas emitidas por motivos contables y fiscales; normalmente es preferible anularlas.</p>
+    </section>
+
+    <section id="previewPanel" class="panel hidden">
+      <div class="preview-toolbar">
+        <div><h2 style="margin-bottom:3px">Vista previa de factura</h2><span class="muted small">Diseño A4 optimizado para imprimir</span></div>
+        <div class="toolbar"><button type="button" class="light" id="backEditBtn">Volver al editor</button><button type="button" class="success" id="downloadPdfBtn">⬇️ Descargar PDF</button><button type="button" class="primary" id="printBtn">🖨️ Imprimir PDF</button><button type="button" class="orange" id="sharePdfBtn">↗️ Compartir PDF</button></div>
+      </div>
+      <article id="paper"></article>
+    </section>
+  </section>
+</main>
+
+<script>
+(() => {
+  "use strict";
+  const SUPABASE_URL = "https://wurumaekirvwcqazhlxo.supabase.co";
+  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_akCgUn_kwxcWIZF-i-i6pA_WHslyV29";
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  const $ = id => document.getElementById(id);
+  const money = n => new Intl.NumberFormat("es-ES",{style:"currency",currency:"EUR"}).format(Number(n||0));
+  const num = n => Math.round((Number(n||0)+Number.EPSILON)*100)/100;
+  const today = () => new Date().toLocaleDateString("en-CA");
+  const escapeHTML = s => String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  let user=null, company=null, invoices=[], editingId=null, editingNumber=null, editingStatus="draft", items=[];
+
+  function say(text,error=false){$("message").textContent=text;$("message").className=text?"status"+(error?" error":""):"";}
+  function showPanel(id){["editorPanel","historyPanel","previewPanel"].forEach(x=>$(x).classList.toggle("hidden",x!==id));window.scrollTo({top:0,behavior:"smooth"});}
+  function loginView(on){$("loginPanel").classList.toggle("hidden",on);$("appPanel").classList.toggle("hidden",!on);}
+  function fmtDate(s){if(!s)return "—";const p=s.slice(0,10).split("-");return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:s;}
+  function dateOffset(days){const d=new Date();d.setDate(d.getDate()+days);return d.toLocaleDateString("en-CA");}
+
+  function readItems(){
+    return [...$("itemsEditor").querySelectorAll(".itemrow")].map((row,i)=>{
+      const vals=row.querySelectorAll("input,select");
+      const description=vals[0].value.trim(), quantity=Number(vals[1].value||0), price=Number(vals[2].value||0), vatRate=Number(vals[3].value||0);
+      const base=num(quantity*price), vat=num(base*vatRate/100);
+      return {description,quantity,unit_price:price,vat_rate:vatRate,line_total:base,vat_amount:vat,sort_order:i};
+    }).filter(x=>x.description && x.quantity>0 && x.unit_price>=0);
+  }
+  function addItem(item={}){
+    const row=document.createElement("div");row.className="itemrow";
+    row.innerHTML=`<div class="field itemdesc"><label>Descripción *</label><input class="idesc" required placeholder="Mano de obra, materiales..." value="${escapeHTML(item.description||"")}"></div>
+      <div class="field"><label>Cantidad</label><input class="iqty" type="number" min="0.001" step="0.001" value="${Number(item.quantity??1)}"></div>
+      <div class="field"><label>Precio unitario €</label><input class="iprice" type="number" min="0" step="0.01" value="${Number(item.unit_price??0)}"></div>
+      <div class="field"><label>IVA %</label><select class="ivat">${[21,10,4,0].map(v=>`<option value="${v}" ${Number(item.vat_rate??21)===v?"selected":""}>${v}%</option>`).join("")}</select></div>
+      <div class="field"><label>Total línea</label><input class="iline" readonly value="${money(Number(item.line_total||0))}"></div>
+      <button type="button" class="removeitem" title="Quitar concepto" aria-label="Quitar concepto">×</button>`;
+    $("itemsEditor").appendChild(row);
+    row.querySelectorAll("input,select").forEach(el=>el.addEventListener("input",calculate));
+    row.querySelector(".removeitem").addEventListener("click",()=>{if($("itemsEditor").querySelectorAll(".itemrow").length===1){say("Debe quedar al menos una línea de concepto.",true);return;}row.remove();calculate();});
+    calculate();
+  }
+  function calculate(){
+    let base=0,vat=0,count=0;
+    $("itemsEditor").querySelectorAll(".itemrow").forEach(row=>{
+      const q=Number(row.querySelector(".iqty").value||0),p=Number(row.querySelector(".iprice").value||0),r=Number(row.querySelector(".ivat").value||0);
+      const b=num(q*p),v=num(b*r/100);
+      row.querySelector(".iline").value=money(b);
+      if(row.querySelector(".idesc").value.trim()){base+=b;vat+=v;count++;}
+    });
+    base=num(base);vat=num(vat);
+    $("baseView").textContent=money(base);$("vatView").textContent=money(vat);$("totalView").textContent=money(base+vat);$("itemsCount").textContent=count;
+    return {items:readItems(),base,vat,total:num(base+vat)};
+  }
+  function resetForm(){
+    editingId=null;editingNumber=null;editingStatus="draft";
+    $("invoiceForm").reset();$("issueDate").value=today();$("dueDate").value="";
+    $("saveStatus").value="draft";$("invoiceNumber").value="";$("invoiceNumber").disabled=false;$("editorTitle").textContent="Nueva factura";
+    $("saveBtn").textContent="Guardar borrador";$("itemsEditor").replaceChildren();addItem();
+    showPanel("editorPanel");say("Formulario nuevo. No se ha eliminado ninguna factura guardada.");
+  }
+  function fillForm(inv,client,lines){
+    editingId=inv.id;editingNumber=inv.invoice_number;editingStatus=inv.status;
+    $("clientName").value=client?.name||"";$("clientTax").value=client?.tax_id||"";
+    $("clientAddress").value=client?.address||"";$("clientPostal").value=client?.postal_code||"";
+    $("clientCity").value=[client?.city,client?.province].filter(Boolean).join(", ");
+    $("issueDate").value=inv.issue_date||today();$("dueDate").value=inv.due_date||"";
+    $("payment").value=inv.payment_method||"Transferencia";$("saveStatus").value=inv.status==="draft"?"draft":"issued";
+    $("invoiceNumber").value=inv.invoice_number??"";$("invoiceNumber").disabled=inv.status!=="draft";
+    $("description").value=inv.description||"";$("notes").value=inv.notes||"";
+    $("bankHolder").value=inv.bank_holder||"";$("bankIban").value=inv.bank_iban||"";
+    $("itemsEditor").replaceChildren();
+    (lines?.length?lines:[{description:inv.description||"Trabajo realizado",quantity:1,unit_price:inv.base_amount,vat_rate:inv.vat_rate}]).forEach(addItem);
+    $("editorTitle").textContent=`Editar ${inv.status==="draft"?"borrador":"factura"} ${inv.invoice_number}`;
+    $("saveBtn").textContent="Guardar cambios";showPanel("editorPanel");calculate();
+  }
+  async function loadCompany(){
+    const {data,error}=await db.from("company_settings").select("*").eq("id",1).single();
+    if(error)throw error;company=data;
+  }
+  async function findOrCreateClient(){
+    const name=$("clientName").value.trim(),tax=$("clientTax").value.trim();
+    let q=db.from("clients").select("*").ilike("name",name).limit(100);
+    const {data,error}=await q;if(error)throw error;
+    let found=(data||[]).find(c=>(c.tax_id||"").trim().toLowerCase()===tax.toLowerCase());
+    if(found){
+      const patch={address:$("clientAddress").value.trim()||null,postal_code:$("clientPostal").value.trim()||null,city:$("clientCity").value.trim()||null,tax_id:tax||null,updated_at:new Date().toISOString()};
+      const {data:updated,error:e}=await db.from("clients").update(patch).eq("id",found.id).select("*").single();
+      if(e)throw e;return updated;
+    }
+    const {data:created,error:e}=await db.from("clients").insert({
+      name,tax_id:tax||null,address:$("clientAddress").value.trim()||null,
+      postal_code:$("clientPostal").value.trim()||null,city:$("clientCity").value.trim()||null,
+      created_by:user.id
+    }).select("*").single();
+    if(e)throw e;return created;
+  }
+  async function logAction(action,inv,details={}){
+    const {error}=await db.from("audit_log").insert({user_id:user.id,action,entity_type:"invoice",entity_id:inv.id,details});
+    if(error)console.warn("No se pudo registrar la actividad:",error.message);
+  }
+  async function saveInvoice(forceStatus){
+    if(!user)return;
+    if(editingId && editingStatus!=="draft"){say("Las facturas emitidas no se pueden editar. Duplica la factura o crea una nueva.",true);return;}
+    if(!$("invoiceForm").reportValidity())return;
+    const calc=calculate();
+    if(!calc.items.length){say("Añade al menos un concepto con descripción, cantidad y precio.",true);return;}
+    if(calc.items.some(x=>!Number.isFinite(x.quantity)||x.quantity<=0||!Number.isFinite(x.unit_price)||x.unit_price<0)){say("Revisa las cantidades y precios de los conceptos.",true);return;}
+    const status=forceStatus||$("saveStatus").value;
+    const manualNumberRaw=$("invoiceNumber").value.trim();
+    const manualNumber=manualNumberRaw===""?null:Number(manualNumberRaw);
+    if(manualNumberRaw!==""&&(!Number.isSafeInteger(manualNumber)||manualNumber<1)){say("El número de factura debe ser un número entero mayor que cero.",true);return;}
+    if(status==="issued"&&!confirm("¿Has comprobado todos los datos y quieres emitir esta factura? Una factura emitida no se podrá editar desde la aplicación."))return;
+    $("saveBtn").disabled=true;$("saveIssueBtn").disabled=true;say("Guardando...");
+    try{
+      const client=await findOrCreateClient();
+      const payload={
+        client_id:client.id,issue_date:$("issueDate").value,due_date:$("dueDate").value||null,
+        payment_method:$("payment").value,status,description:$("description").value.trim(),
+        base_amount:calc.base,vat_rate:calc.items[0]?.vat_rate??21,vat_amount:calc.vat,total_amount:calc.total,
+        notes:$("notes").value.trim()||null,bank_holder:$("bankHolder").value.trim()||null,
+        bank_iban:$("bankIban").value.trim()||null,updated_at:new Date().toISOString(),created_by:user.id
+      };
+      if(manualNumber!==null)payload.invoice_number=manualNumber;
+      else if(editingId)payload.invoice_number=editingNumber;
+      let inv;
+      if(editingId){
+        const {data,error}=await db.from("invoices").update(payload).eq("id",editingId).eq("status","draft").select("*").single();
+        if(error)throw error;inv=data;
+        const {error:delError}=await db.from("invoice_items").delete().eq("invoice_id",inv.id);
+        if(delError)throw delError;
+      }else{
+        const {data,error}=await db.from("invoices").insert(payload).select("*").single();
+        if(error)throw error;inv=data;
+      }
+      const rows=calc.items.map(x=>({...x,invoice_id:inv.id}));
+      const {error:itemError}=await db.from("invoice_items").insert(rows);
+      if(itemError){say("La cabecera se guardó, pero falló el guardado de conceptos. No emitas esta factura hasta revisarla. Error: "+itemError.message,true);return;}
+      await logAction(editingId?"invoice_updated":status==="draft"?"invoice_draft_created":"invoice_issued",inv,{invoice_number:inv.invoice_number,status});
+      editingId=inv.id;editingNumber=inv.invoice_number;editingStatus=inv.status;
+      say(`Factura ${inv.invoice_number} guardada como ${status==="draft"?"borrador":"emitida"}.`);
+      await loadHistory();
+      if(status==="issued"){await openSavedInvoice(inv.id);showPanel("previewPanel");}
+      else{ $("editorTitle").textContent=`Editar borrador ${inv.invoice_number}`;$("saveBtn").textContent="Guardar cambios";}
+    }catch(e){console.error(e);say("No se pudo guardar: "+(e.message||"error desconocido")+". Comprueba el SQL y los permisos de Supabase.",true);}
+    finally{$("saveBtn").disabled=false;$("saveIssueBtn").disabled=false;}
+  }
+  async function loadHistory(){
+    const {data,error}=await db.from("invoices").select("*,clients(id,name,tax_id,address,postal_code,city,province)")
+      .order("invoice_number",{ascending:false}).limit(500);
+    if(error)throw error;invoices=data||[];renderHistory();
+  }
+  function renderHistory(){
+    const search=$("searchHistory").value.trim().toLowerCase(),status=$("filterStatus").value;
+    const filtered=invoices.filter(i=>(!status||i.status===status)&&
+      (String(i.invoice_number).includes(search)||String(i.clients?.name||"").toLowerCase().includes(search)));
+    $("countAll").textContent=invoices.length;
+    $("countDraft").textContent=invoices.filter(i=>i.status==="draft").length;
+    $("countIssued").textContent=invoices.filter(i=>i.status==="issued").length;
+    const body=$("historyRows");body.replaceChildren();
+    if(!filtered.length){body.innerHTML='<tr><td colspan="6">No hay facturas que coincidan con la búsqueda.</td></tr>';return;}
+    filtered.forEach(inv=>{
+      const tr=document.createElement("tr");
+      const statusText={draft:"Borrador",issued:"Emitida",void:"Anulada"}[inv.status]||inv.status;
+      const cells=[String(inv.invoice_number),fmtDate(inv.issue_date),inv.clients?.name||"Cliente",money(inv.total_amount)];
+      cells.forEach((v,idx)=>{const td=document.createElement("td");td.textContent=v;if(idx===3)td.className="right";tr.appendChild(td);});
+      const st=document.createElement("td");st.innerHTML=`<span class="pill ${inv.status}">${statusText}</span>`;tr.appendChild(st);
+      const actions=document.createElement("td");
+      const addBtn=(label,cls,fn)=>{const b=document.createElement("button");b.textContent=label;b.className=cls;b.style.margin="2px";b.style.padding="7px 9px";b.addEventListener("click",fn);actions.appendChild(b);};
+      addBtn("Ver / PDF","light",async()=>{try{await openSavedInvoice(inv.id);showPanel("previewPanel");}catch(e){say("No se pudo abrir la factura: "+e.message,true);}});
+      if(inv.status==="draft"){
+        addBtn("Editar","primary",async()=>{try{const {data:lines,error}=await db.from("invoice_items").select("*").eq("invoice_id",inv.id).order("sort_order");if(error)throw error;fillForm(inv,inv.clients,lines||[]);say("Editando borrador "+inv.invoice_number);}catch(e){say("No se pudo cargar el borrador: "+e.message,true);}});
+        addBtn("Emitir","orange",async()=>{if(!confirm(`¿Emitir la factura ${inv.invoice_number}? Comprueba antes todos los datos.`))return;try{
+          const {data,error}=await db.from("invoices").update({status:"issued",updated_at:new Date().toISOString()}).eq("id",inv.id).eq("status","draft").select("*").single();
+          if(error)throw error;await logAction("invoice_issued",data,{invoice_number:data.invoice_number});say("Factura emitida.");await loadHistory();
+        }catch(e){say("No se pudo emitir: "+e.message,true);}});
+      }else if(inv.status==="issued"){
+        addBtn("Anular","danger",async()=>{if(!confirm(`¿Marcar la factura ${inv.invoice_number} como anulada? Se conservará en el historial.`))return;try{
+          const {data,error}=await db.from("invoices").update({status:"void",updated_at:new Date().toISOString()}).eq("id",inv.id).eq("status","issued").select("*").single();
+          if(error)throw error;await logAction("invoice_voided",data,{invoice_number:data.invoice_number});say("Factura marcada como anulada.");await loadHistory();
+        }catch(e){say("No se pudo anular: "+e.message,true);}});
+      }
+      addBtn("Eliminar definitivamente","danger",async()=>{
+        const issuedWarning=inv.status==="issued"||inv.status==="void";
+        const extra=issuedWarning?"\n\nATENCIÓN: es una factura emitida/anulada. En España normalmente debes conservar las facturas por obligaciones fiscales y contables. Es preferible mantenerla y anularla cuando corresponda.":"";
+        if(!confirm(`¿Eliminar DEFINITIVAMENTE la factura ${inv.invoice_number} de la base de datos? Esta acción no se puede deshacer.${extra}`))return;
+        if(issuedWarning&&!confirm("Confirmación adicional: entiendo que el borrado puede incumplir obligaciones de conservación y aun así quiero continuar."))return;
+        try{
+          await logAction("invoice_deleted",inv,{invoice_number:inv.invoice_number,status:inv.status});
+          const {error:le}=await db.from("invoice_items").delete().eq("invoice_id",inv.id);if(le)throw le;
+          const {error:ie}=await db.from("invoices").delete().eq("id",inv.id);if(ie)throw ie;
+          say(`Factura ${inv.invoice_number} eliminada de la base de datos.`);await loadHistory();
+        }catch(e){say("No se pudo eliminar. Revisa las políticas RLS de Supabase: "+(e.message||"error desconocido"),true);}
+      });
+      addBtn("Duplicar","light",async()=>{try{
+        const {data:lines,error}=await db.from("invoice_items").select("*").eq("invoice_id",inv.id).order("sort_order");if(error)throw error;
+        fillForm({...inv,id:null,invoice_number:null,status:"draft",issue_date:today(),due_date:null},inv.clients,lines||[]);
+        editingId=null;editingNumber=null;editingStatus="draft";$("invoiceNumber").value="";$("invoiceNumber").disabled=false;$("editorTitle").textContent="Nueva factura · Copia";$("saveBtn").textContent="Guardar borrador";$("saveStatus").value="draft";say("Copia preparada como borrador nuevo. Se asignará un número al guardar.");
+      }catch(e){say("No se pudo duplicar: "+e.message,true);}});
+      tr.appendChild(actions);body.appendChild(tr);
+    });
+  }
+  function buildPaper(inv,client,lines){
+    const c=company||{};
+    const totalBase=num(lines.reduce((s,x)=>s+Number(x.line_total||0),0));
+    const totalVat=num(lines.reduce((s,x)=>s+Number(x.vat_amount??(Number(x.line_total||0)*Number(x.vat_rate||0)/100)),0));
+    const total=num(inv.total_amount??totalBase+totalVat);
+    const lineHTML=lines.map(x=>`<tr><td>${escapeHTML(x.description)}</td><td>${Number(x.quantity||0).toLocaleString("es-ES",{maximumFractionDigits:3})}</td><td>${money(x.unit_price)}</td><td>${Number(x.vat_rate||0)}%</td><td>${money(x.vat_amount??Number(x.line_total||0)*Number(x.vat_rate||0)/100)}</td><td><strong>${money(Number(x.line_total||0)+Number(x.vat_amount??Number(x.line_total||0)*Number(x.vat_rate||0)/100))}</strong></td></tr>`).join("");
+    $("paper").innerHTML=`
+      <div class="paper-top"></div>
+      <div class="paper-head">
+        <div class="brand"><div class="mark">MH</div><div><h2>${escapeHTML(c.owner_name||"Mihai Hostinariu")}</h2><p>ALBAÑILERÍA · REFORMAS · CONSTRUCCIÓN</p></div></div>
+        <div class="doc"><span class="doc-tag">${inv.status==="draft"?"BORRADOR":inv.status==="void"?"ANULADA":"FACTURA"}</span><div class="doc-number">${escapeHTML((String(inv.issue_date||today()).slice(0,4))+" N"+inv.invoice_number)}</div><div class="doc-meta">Fecha&nbsp; <strong>${fmtDate(inv.issue_date)}</strong><br>Pago&nbsp; <strong>${escapeHTML(inv.payment_method||"—")}</strong>${inv.due_date?`<br>Vencimiento&nbsp; <strong>${fmtDate(inv.due_date)}</strong>`:""}</div></div>
+      </div>
+      <div class="parties">
+        <section class="party"><div class="party-title">● EMISOR</div><strong>${escapeHTML(c.owner_name||"Mihai Hostinariu")}</strong><div class="party-lines">${escapeHTML("NIF: "+(c.tax_id||"X6690Q141Q"))}\n${escapeHTML(c.address||"C/ Deseminado N°3387")}\n${escapeHTML(c.additional_address||"")}\n${escapeHTML("C.P. "+(c.postal_code||"46160")+" · "+(c.city||"Llíria"))}\n${escapeHTML(c.phone||"+34 666 210 205")}\n${escapeHTML(c.email||"Rglmihai@hotmail.com")}</div></section>
+        <section class="party client"><div class="party-title">● CLIENTE</div><strong>${escapeHTML(client?.name||"Cliente")}</strong><div class="party-lines">${escapeHTML(client?.tax_id?"NIF/DNI/CIF: "+client.tax_id:"")}\n${escapeHTML(client?.address||"")}\n${escapeHTML([client?.postal_code,client?.city,client?.province].filter(Boolean).join(" "))}</div></section>
+      </div>
+      <div class="workbox"><div class="label">CONCEPTO / TRABAJO REALIZADO</div><div class="desc">${escapeHTML(inv.description||"Trabajo realizado")}</div></div>
+      <table class="paper-table"><thead><tr><th>DESCRIPCIÓN</th><th>CANT.</th><th>PRECIO</th><th>IVA</th><th>IMP. IVA</th><th>TOTAL</th></tr></thead><tbody>${lineHTML}</tbody></table>
+      <div class="bottom-grid">
+        <div class="bankbox"><h3>DATOS PARA LA TRANSFERENCIA</h3>${inv.bank_holder||inv.bank_iban?`<p><strong>Titular:</strong> ${escapeHTML(inv.bank_holder||c.owner_name||"Mihai Hostinariu")}</p><p><strong>IBAN:</strong> ${escapeHTML(inv.bank_iban||"")}</p><p><strong>Concepto:</strong> Factura ${escapeHTML(inv.invoice_number)}</p>`:`<p>Forma de pago: ${escapeHTML(inv.payment_method||"—")}</p><p>Gracias por confiar en nuestros servicios.</p>`}</div>
+        <div class="paper-totals"><div class="total-line"><span>Base imponible</span><strong>${money(totalBase)}</strong></div>${[21,10,4,0].filter(rate=>lines.some(x=>Number(x.vat_rate||0)===rate)).map(rate=>{const b=lines.filter(x=>Number(x.vat_rate||0)===rate).reduce((s,x)=>s+Number(x.line_total||0),0);const v=lines.filter(x=>Number(x.vat_rate||0)===rate).reduce((s,x)=>s+Number(x.vat_amount??Number(x.line_total||0)*rate/100),0);return `<div class="total-line"><span>IVA ${rate}%</span><strong>${money(v)}</strong></div>`;}).join("")}<div class="grand"><span>TOTAL FACTURA</span><span>${money(total)}</span></div></div>
+      </div>
+      ${inv.notes?`<div class="paper-notes"><strong>Observaciones:</strong>\n${escapeHTML(inv.notes)}</div>`:""}
+      <div class="paper-footer"><div><strong>${escapeHTML(c.owner_name||"Mihai Hostinariu")}</strong> · NIF: ${escapeHTML(c.tax_id||"X6690Q141Q")}<br>${escapeHTML(c.city||"Llíria")} · ${escapeHTML(c.phone||"+34 666 210 205")} · ${escapeHTML(c.email||"Rglmihai@hotmail.com")}</div><div style="text-align:right">Gracias por su confianza.</div></div>`;
+  }
+  async function openSavedInvoice(id){
+    const {data:inv,error}=await db.from("invoices").select("*,clients(*)").eq("id",id).single();if(error)throw error;
+    const {data:lines,error:le}=await db.from("invoice_items").select("*").eq("invoice_id",id).order("sort_order");if(le)throw le;
+    buildPaper(inv,inv.clients,lines||[]);
+  }
+  async function previewCurrent(){
+    if(!$("invoiceForm").reportValidity())return;
+    const calc=calculate(),client={name:$("clientName").value,tax_id:$("clientTax").value,address:$("clientAddress").value,postal_code:$("clientPostal").value,city:$("clientCity").value};
+    const inv={invoice_number:$("invoiceNumber").value.trim()||editingNumber||"BORRADOR",issue_date:$("issueDate").value,due_date:$("dueDate").value,payment_method:$("payment").value,status:editingStatus,description:$("description").value,base_amount:calc.base,vat_amount:calc.vat,total_amount:calc.total,notes:$("notes").value,bank_holder:$("bankHolder").value,bank_iban:$("bankIban").value};
+    buildPaper(inv,client,calc.items.map(x=>({...x,vat_amount:x.vat_amount})));showPanel("previewPanel");
+  }
+  $("loginForm").addEventListener("submit",async e=>{
+    e.preventDefault();say("Iniciando sesión...");
+    const {data,error}=await db.auth.signInWithPassword({email:$("loginEmail").value.trim(),password:$("loginPassword").value});
+    if(error){say("No se pudo iniciar sesión. Comprueba las credenciales y que el usuario tenga un perfil activo.",true);return;}
+    user=data.user;loginView(true);$("userLabel").textContent="Sesión: "+user.email;
+    try{await loadCompany();await loadHistory();resetForm();say("Sesión iniciada. Datos cargados.");}
+    catch(err){console.error(err);say("La sesión se inició, pero hubo un error al cargar datos: "+err.message,true);}
+  });
+  $("invoiceForm").addEventListener("submit",e=>{e.preventDefault();saveInvoice("draft");});
+  $("addItemBtn").addEventListener("click",()=>addItem());
+  $("saveIssueBtn").addEventListener("click",()=>saveInvoice("issued"));
+  $("previewBtn").addEventListener("click",previewCurrent);
+  $("previewFromEditor").addEventListener("click",previewCurrent);
+  $("backEditBtn").addEventListener("click",()=>showPanel("editorPanel"));
+  function pdfFileName(){
+    const number=($("paper").querySelector(".doc-number")?.textContent||"Factura").replace(/[^a-zA-Z0-9_-]+/g,"_");
+    return `${number}.pdf`;
+  }
+  async function createPdfBlob(){
+    if(!$("paper").innerHTML.trim()) throw new Error("Primero abre o previsualiza una factura.");
+    if(typeof window.html2pdf!=="function") throw new Error("No se ha podido cargar el generador PDF. Comprueba la conexión a Internet y vuelve a intentarlo.");
+    const element=$("paper");
+    const options={margin:[8,8,8,8],filename:pdfFileName(),image:{type:"jpeg",quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",logging:false},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css","legacy"]}};
+    return await window.html2pdf().set(options).from(element).toPdf().get("pdf").then(pdf=>pdf.output("blob"));
+  }
+  $("downloadPdfBtn").addEventListener("click",async()=>{
+    const btn=$("downloadPdfBtn");btn.disabled=true;const old=btn.textContent;btn.textContent="Generando PDF…";
+    try{
+      const blob=await createPdfBlob();const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=pdfFileName();a.style.display="none";document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),60000);say("PDF generado. Si el navegador no lo descarga automáticamente, usa Compartir PDF y selecciona Guardar en Archivos.");
+    }catch(e){console.error(e);say(e.message||"No se pudo descargar el PDF.",true)}
+    finally{btn.disabled=false;btn.textContent=old}
+  });
+  $("printBtn").addEventListener("click",()=>{try{window.print()}catch(e){say("No se pudo abrir la impresión. Prueba Descargar PDF.",true)}});
+  $("sharePdfBtn").addEventListener("click",async()=>{
+    const btn=$("sharePdfBtn");btn.disabled=true;const old=btn.textContent;btn.textContent="Preparando…";
+    try{
+      const blob=await createPdfBlob();const file=new File([blob],pdfFileName(),{type:"application/pdf"});
+      if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){await navigator.share({files:[file],title:pdfFileName()});say("PDF compartido correctamente.");}
+      else{const url=URL.createObjectURL(blob);const w=window.open(url,"_blank");if(!w){const a=document.createElement("a");a.href=url;a.download=pdfFileName();a.click();}say("Este navegador no permite compartir archivos directamente. Se ha abierto el PDF para que puedas guardarlo o compartirlo desde el navegador.");setTimeout(()=>URL.revokeObjectURL(url),60000)}
+    }catch(e){if(e.name!=="AbortError"){console.error(e);say(e.message||"No se pudo compartir el PDF.",true)}else say("Compartir cancelado.")}
+    finally{btn.disabled=false;btn.textContent=old}
+  });
+  $("newBtn").addEventListener("click",resetForm);
+  $("clearBtn").addEventListener("click",()=>{if(confirm("¿Limpiar el formulario? Los borradores guardados no se borrarán."))resetForm();});
+  $("historyBtn").addEventListener("click",async()=>{showPanel("historyPanel");try{await loadHistory();}catch(e){say("Error al cargar el historial: "+e.message,true);}});
+  $("reloadBtn").addEventListener("click",async()=>{try{await loadCompany();await loadHistory();say("Datos actualizados.");}catch(e){say("Error al actualizar: "+e.message,true);}});
+  $("searchHistory").addEventListener("input",renderHistory);
+  $("filterStatus").addEventListener("change",renderHistory);
+  $("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();user=null;loginView(false);say("Sesión cerrada.");});
+  db.auth.onAuthStateChange(async(event,session)=>{
+    if(event==="SIGNED_OUT"){loginView(false);user=null;}
+  });
+  async function init(){
+    $("issueDate").value=today();addItem();
+    const {data}=await db.auth.getSession();
+    if(data.session?.user){
+      user=data.session.user;loginView(true);$("userLabel").textContent="Sesión: "+user.email;
+      try{await loadCompany();await loadHistory();showPanel("editorPanel");}
+      catch(e){say("No se pudieron cargar los datos. Comprueba las políticas y las tablas: "+e.message,true);}
+    }
+  }
+  init();
+})();
+</script>
+</body>
+</html>
