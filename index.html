@@ -1,0 +1,1734 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14233f">
+<meta name="color-scheme" content="light">
+<meta name="description" content="Panel privado de facturación de Reformas Generales Mihai.">
+<title>RGL Mihai | Panel de facturación</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
+
+<style>
+:root {
+  --navy:#14233f;
+  --navy2:#203858;
+  --orange:#df8219;
+  --orange-light:#fff3e4;
+  --ink:#202b3c;
+  --muted:#6c788b;
+  --line:#e0e6ef;
+  --bg:#f3f6fb;
+  --white:#fff;
+  --green:#18794e;
+  --green-bg:#e9f7ef;
+  --red:#b42332;
+  --red-bg:#fff0f1;
+  --radius:16px;
+  --shadow:0 8px 28px rgba(20,35,63,.06);
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.5 Inter,"Segoe UI",Arial,sans-serif;
+}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.55;cursor:wait;transform:none!important}
+button:focus-visible,a:focus-visible,input:focus-visible,
+select:focus-visible,textarea:focus-visible{
+  outline:3px solid #f1b96f;outline-offset:2px
+}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.right{text-align:right}
+.full{grid-column:1/-1}
+h1,h2,h3,p{overflow-wrap:anywhere}
+h2{font-size:clamp(21px,2.5vw,27px);line-height:1.25;margin:0 0 14px;color:var(--navy)}
+h3{font-size:17px;line-height:1.3;margin:0 0 12px;color:var(--navy)}
+
+.site-header{
+  position:relative;isolation:isolate;overflow:hidden;
+  padding:30px max(18px,calc((100% - 1280px)/2));
+  color:#fff;border-bottom:5px solid var(--orange);
+  background:
+    linear-gradient(90deg,rgba(12,25,46,.97),rgba(12,25,46,.78) 65%,rgba(12,25,46,.5)),
+    url("https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1800&q=85")
+    center 47%/cover no-repeat,var(--navy);
+}
+.header-inner{position:relative;z-index:1;display:flex;align-items:center;gap:16px}
+.logo-mark{
+  flex:0 0 54px;width:54px;height:54px;border-radius:15px;
+  display:grid;place-items:center;background:var(--orange);color:#fff;
+  font-size:17px;font-weight:900;letter-spacing:-1px;
+  box-shadow:0 7px 18px #0003
+}
+.site-header h1{margin:0;color:white;font-size:clamp(22px,3vw,32px);letter-spacing:-.5px}
+.site-header p{margin:6px 0 0;color:#e0e8f5;font-size:14px}
+.header-tag{
+  margin-left:auto;align-self:flex-start;white-space:nowrap;
+  padding:7px 11px;border:1px solid #ffffff35;border-radius:30px;
+  color:#fff;background:#ffffff12;font-size:12px;font-weight:700
+}
+main{max-width:1320px;margin:auto;padding:24px}
+.panel{
+  background:var(--white);border:1px solid var(--line);border-radius:var(--radius);
+  padding:clamp(18px,2.5vw,28px);margin-bottom:18px;box-shadow:var(--shadow);
+  min-width:0
+}
+.panel-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;flex-wrap:wrap}
+.divider{height:1px;background:var(--line);margin:20px 0}
+.toolbar,.actions{display:flex;flex-wrap:wrap;align-items:center;gap:9px}
+button{
+  border:0;border-radius:10px;padding:11px 15px;min-height:44px;
+  font-weight:750;transition:background .15s,transform .15s,box-shadow .15s
+}
+button:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 5px 14px #14233f16}
+.primary{background:var(--navy);color:#fff}
+.primary:hover{background:var(--navy2)}
+.orange{background:var(--orange);color:#fff}
+.orange:hover{background:#c66e0b}
+.light{background:#edf2f8;color:var(--navy)}
+.light:hover{background:#e1e8f2}
+.danger{background:var(--red-bg);color:var(--red)}
+.success{background:var(--green);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.field{display:flex;flex-direction:column;gap:7px;min-width:0}
+label{font-size:14px;font-weight:750;color:#2b3a50}
+input,select,textarea{
+  display:block;width:100%;min-width:0;min-height:48px;padding:12px 13px;
+  border:1px solid #cbd5e2;border-radius:10px;background:#fff;color:var(--ink);
+  transition:border-color .15s,box-shadow .15s
+}
+input:hover,select:hover,textarea:hover{border-color:#a7b5c9}
+input:focus,select:focus,textarea:focus{
+  outline:0;border-color:var(--orange);box-shadow:0 0 0 3px #df82191c
+}
+input::placeholder,textarea::placeholder{color:#8994a4}
+textarea{min-height:85px;resize:vertical}
+.field-hint{font-size:12px;color:var(--muted);line-height:1.45}
+.status{
+  padding:13px 16px;border-radius:12px;margin:0 0 16px;
+  color:#17643d;background:var(--green-bg);border:1px solid #c9e9d5;
+  white-space:pre-wrap;overflow-wrap:anywhere
+}
+.status.error{background:var(--red-bg);color:#98232e;border-color:#f0c9ce}
+.status.info{background:#edf4ff;color:#234c85;border-color:#d2e1fb}
+.status:empty{display:none}
+#loginPanel{max-width:650px;margin:28px auto 35px;padding:0;overflow:hidden}
+.login-banner{
+  min-height:175px;padding:27px;color:#fff;display:flex;flex-direction:column;
+  justify-content:flex-end;position:relative;isolation:isolate;
+  background:
+    linear-gradient(0deg,rgba(12,25,46,.96),rgba(12,25,46,.25)),
+    url("https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1200&q=85")
+    center/cover no-repeat,var(--navy)
+}
+.login-banner h2{color:#fff;margin:0;font-size:27px}
+.login-banner p{margin:8px 0 0;color:#e6edf7}
+.login-body{padding:clamp(20px,4vw,34px)}
+.login-body .field{margin-bottom:17px}
+.login-body button{width:100%;min-height:51px}
+.login-security{
+  margin-top:17px;padding:12px;background:#f5f7fb;border-radius:10px;
+  color:var(--muted);font-size:12px
+}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0}
+.stat{
+  padding:19px;background:linear-gradient(145deg,#fff,#f7f9fc);
+  border:1px solid var(--line);border-radius:14px;min-width:0
+}
+.stat-label{font-size:13px;color:var(--muted)}
+.stat strong{display:block;margin-top:7px;font-size:clamp(24px,3vw,32px);line-height:1.2;color:var(--navy);overflow-wrap:anywhere}
+.stat-accent{border-top:3px solid var(--orange)}
+.table-wrap{width:100%;overflow-x:auto;border:1px solid var(--line);border-radius:12px;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;min-width:700px}
+th,td{padding:12px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+th{background:#eef2f8;color:#43516a;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:#fafbfd}
+.pill{display:inline-block;padding:5px 9px;border-radius:20px;font-size:12px;font-weight:800;white-space:nowrap}
+.pill.draft{background:#fff0d5;color:#865200}
+.pill.issued{background:#e3f6eb;color:#17643d}
+.pill.void{background:#ffebed;color:#a12b36}
+.itemrow{
+  display:grid;grid-template-columns:minmax(170px,3fr) minmax(75px,.8fr)
+  minmax(105px,1.2fr) minmax(75px,.8fr) minmax(110px,1.2fr) 42px;
+  gap:9px;align-items:end;margin-bottom:12px;padding:13px;
+  border:1px solid var(--line);border-radius:13px;background:#f9fbfd
+}
+.itemrow label{font-size:12px}
+.itemrow input,.itemrow select{padding:10px 8px;min-height:44px}
+.itemrow .iline{background:#edf1f6;font-weight:750}
+.removeitem{min-height:44px;padding:8px;font-size:22px;background:#fff0f0;color:var(--red)}
+.totals{
+  width:min(100%,430px);margin-left:auto;border:1px solid var(--line);
+  border-radius:13px;padding:16px;background:#fff
+}
+.total-line{display:flex;justify-content:space-between;gap:14px;padding:7px 0}
+.total-line strong{text-align:right;font-variant-numeric:tabular-nums}
+.grand{
+  margin:10px -16px -16px;padding:16px;background:var(--navy);color:#fff;
+  border-radius:0 0 12px 12px;display:flex;justify-content:space-between;
+  gap:10px;font-size:20px;font-weight:850
+}
+.preview-toolbar{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;margin-bottom:17px}
+.preview-toolbar .toolbar{margin:0}
+#paper{
+  background:#fff;color:#20283a;width:100%;max-width:850px;margin:0 auto;
+  padding:36px 38px;border:1px solid #e3e5eb;box-shadow:0 8px 30px #10182d0c;
+  min-height:0;overflow-wrap:anywhere
+}
+.paper-top{height:7px;background:var(--orange);margin:-36px -38px 28px}
+.paper-head{display:flex;justify-content:space-between;gap:22px;align-items:flex-start;padding-bottom:20px;border-bottom:2px solid var(--navy)}
+.brand{display:flex;gap:13px;align-items:center;min-width:0}
+.mark{flex:0 0 53px;width:53px;height:53px;background:var(--orange);color:#fff;border-radius:13px;display:grid;place-items:center;font-weight:900;font-size:18px}
+.brand h2{margin:0;font-size:20px}
+.brand p{margin:4px 0;color:#697487;font-size:10px;letter-spacing:.8px;font-weight:bold}
+.doc{text-align:right;min-width:170px}
+.doc-tag{display:inline-block;background:var(--navy);color:#fff;border-radius:20px;padding:5px 12px;font-size:10px;font-weight:bold;letter-spacing:1.5px}
+.doc-number{font-size:24px;font-weight:850;margin:6px 0;overflow-wrap:anywhere}
+.doc-meta{font-size:11px;color:#687286;line-height:1.8}
+.doc-meta strong{color:var(--ink)}
+.parties{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:21px 0}
+.party{border:1px solid var(--line);border-top:4px solid var(--orange);border-radius:12px;padding:14px;min-height:0;overflow-wrap:anywhere}
+.party.client{border-top-color:var(--navy)}
+.party-title{font-size:10px;font-weight:bold;letter-spacing:1.3px;color:#a9560c;margin-bottom:9px}
+.party.client .party-title{color:var(--navy)}
+.party strong{display:block;margin-bottom:6px;font-size:13px}
+.party-lines{font-size:11px;line-height:1.65;color:#485367;white-space:pre-line}
+.workbox{background:#fbfbfd;border:1px solid var(--line);border-left:4px solid var(--orange);border-radius:11px;padding:14px 16px;margin:17px 0}
+.workbox .label{font-size:10px;font-weight:bold;letter-spacing:1.3px;color:#a9560c;margin-bottom:6px}
+.workbox .desc{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}
+.paper-table{width:100%;min-width:0;font-size:10px;border-collapse:collapse;margin:15px 0;table-layout:fixed}
+.paper-table th{background:var(--navy);color:#fff;padding:9px 5px;letter-spacing:.02em;font-size:9px}
+.paper-table td{padding:8px 5px;border-bottom:1px solid #e3e6ec;overflow-wrap:anywhere;word-break:normal}
+.paper-table td:not(:first-child),.paper-table th:not(:first-child){text-align:right}
+.paper-table th:first-child,.paper-table td:first-child{width:36%;text-align:left}
+.paper-table th:nth-child(2){width:9%}
+.paper-table th:nth-child(3){width:14%}
+.paper-table th:nth-child(4){width:8%}
+.paper-table th:nth-child(5){width:15%}
+.paper-table th:nth-child(6){width:18%}
+.bottom-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:14px;margin-top:16px}
+.bankbox{background:#fff7ed;border:1px solid #f3d6b1;border-radius:11px;padding:13px;font-size:11px;overflow-wrap:anywhere}
+.bankbox h3{font-size:10px;letter-spacing:1.2px;color:#a9560c;margin-bottom:8px}
+.bankbox p{margin:6px 0}
+.paper-totals{border:1px solid var(--line);border-radius:11px;overflow:hidden;align-self:start}
+.paper-totals .total-line{padding:8px 11px;font-size:11px}
+.paper-totals .grand{margin:0;border-radius:0;font-size:14px;padding:12px}
+.paper-notes{font-size:10px;color:#59677c;margin-top:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.paper-footer{border-top:1px solid var(--line);margin-top:19px;padding-top:10px;display:flex;justify-content:space-between;gap:14px;font-size:9px;color:#758094}
+.paper-footer>div{min-width:0;overflow-wrap:anywhere}
+.empty-state{text-align:center;padding:28px 15px;color:var(--muted)}
+.mobile-actions{display:flex;flex-wrap:wrap;gap:5px;max-width:420px}
+.mobile-actions button{font-size:12px;min-height:36px;padding:7px 9px}
+
+@media(max-width:1000px){
+  main{padding:18px}
+  .itemrow{grid-template-columns:minmax(150px,2fr) repeat(2,minmax(90px,1fr))}
+  .itemrow .itemdesc{grid-column:1/-1}
+}
+@media(max-width:650px){
+  body{font-size:15px}
+  .site-header{padding:22px 16px;background-position:center}
+  .header-inner{align-items:flex-start;gap:11px}
+  .logo-mark{flex-basis:43px;width:43px;height:43px;border-radius:12px;font-size:14px}
+  .site-header h1{font-size:21px}
+  .site-header p{font-size:12px}
+  .header-tag{display:none}
+  main{padding:11px 9px 25px}
+  .panel{padding:16px;margin-bottom:13px;border-radius:14px}
+  .grid,.stats{grid-template-columns:minmax(0,1fr)}
+  .full{grid-column:auto}
+  .toolbar,.actions{display:grid;grid-template-columns:minmax(0,1fr)}
+  .toolbar button,.actions button{width:100%;min-height:48px}
+  .login-banner{min-height:150px;padding:22px}
+  .login-banner h2{font-size:24px}
+  .login-body{padding:21px}
+  .itemrow{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:11px}
+  .itemrow .itemdesc,.itemrow .removeitem{grid-column:1/-1}
+  .itemrow .removeitem{width:100%}
+  .preview-toolbar{align-items:stretch}
+  .preview-toolbar>div,.preview-toolbar .toolbar{width:100%}
+  #paper{padding:18px 12px}
+  .paper-top{margin:-18px -12px 17px;height:5px}
+  .paper-head{gap:8px;padding-bottom:13px}
+  .brand{gap:7px;align-items:flex-start}
+  .mark{flex-basis:36px;width:36px;height:36px;border-radius:9px;font-size:13px}
+  .brand h2{font-size:14px}
+  .brand p{font-size:7px;letter-spacing:.3px}
+  .doc{min-width:110px}
+  .doc-tag{font-size:8px;padding:4px 7px;letter-spacing:.7px}
+  .doc-number{font-size:16px}
+  .doc-meta{font-size:9px;line-height:1.6}
+  .parties,.bottom-grid{grid-template-columns:minmax(0,1fr);gap:10px}
+  .parties{margin:14px 0}
+  .party{padding:11px}
+  .workbox{margin:12px 0;padding:11px}
+  .paper-table{font-size:8px;margin:12px 0}
+  .paper-table th{font-size:7px;padding:6px 2px}
+  .paper-table td{padding:6px 2px}
+  .paper-footer{flex-direction:column}
+  .paper-footer .footer-thanks{text-align:left!important}
+  .table-wrap table{min-width:700px}
+  .totals{width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition:none!important}
+}
+
+@page{size:A4 portrait;margin:9mm}
+@media print{
+  body{background:#fff!important;font-size:9pt}
+  body *{visibility:hidden!important}
+  #paper,#paper *{visibility:visible!important}
+  #paper{
+    position:absolute;left:0;top:0;width:100%;max-width:none;min-height:0;
+    margin:0;padding:0;border:0;box-shadow:none;overflow:visible
+  }
+  .paper-top{margin:0 0 6mm;height:2mm}
+  .paper-head{padding-bottom:3mm}
+  .parties{margin:4mm 0;gap:3mm}
+  .party{padding:2.5mm}
+  .workbox{margin:3mm 0;padding:2.5mm}
+  .paper-table{margin:3mm 0;font-size:7.5pt}
+  .paper-table th,.paper-table td{padding:1.6mm 1mm}
+  .bottom-grid{gap:3mm;margin-top:3mm}
+  .bankbox{padding:2.5mm}
+  .paper-totals .total-line{padding:2mm 2.5mm}
+  .paper-totals .grand{padding:2.5mm;font-size:11pt}
+  .paper-footer{margin-top:4mm;padding-top:2.5mm}
+  .paper-head,.parties,.party,.workbox,.bottom-grid,.bankbox,.paper-totals,.paper-notes,.paper-footer{
+    break-inside:avoid;page-break-inside:avoid
+  }
+  .paper-table{page-break-inside:auto}
+  .paper-table thead{display:table-header-group}
+  .paper-table tr{break-inside:avoid;page-break-inside:avoid}
+}
+</style>
+</head>
+
+<body>
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo-mark" aria-hidden="true">RGL</div>
+    <div>
+      <h1>Reformas Generales &amp; Limpieza Mihai</h1>
+      <p>Panel privado de facturación · Gestión de la empresa</p>
+    </div>
+    <div class="header-tag">● Acceso privado</div>
+  </div>
+</header>
+
+<main>
+  <div id="message" class="status" role="status" aria-live="polite"></div>
+
+  <section id="loginPanel" class="panel">
+    <div class="login-banner">
+      <h2>Bienvenido al panel</h2>
+      <p>Gestiona tus facturas de forma sencilla y segura.</p>
+    </div>
+    <div class="login-body">
+      <h2>Acceso a facturación</h2>
+      <p class="muted">Introduce las credenciales de tu cuenta autorizada.</p>
+      <form id="loginForm">
+        <div class="field">
+          <label for="loginEmail">Correo electrónico</label>
+          <input id="loginEmail" type="email" autocomplete="username"
+            placeholder="nombre@empresa.es" required>
+        </div>
+        <div class="field">
+          <label for="loginPassword">Contraseña</label>
+          <input id="loginPassword" type="password" autocomplete="current-password"
+            placeholder="Tu contraseña" required>
+        </div>
+        <button class="primary" id="loginBtn" type="submit">Iniciar sesión</button>
+      </form>
+      <div class="login-security">🔒 Panel de uso interno. Solo podrán acceder las cuentas autorizadas por la configuración de Supabase.</div>
+    </div>
+  </section>
+
+  <section id="appPanel" class="hidden">
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <h2>Área de trabajo</h2>
+          <p class="muted small">Crea, consulta y administra las facturas de la empresa.</p>
+        </div>
+        <div id="userLabel" class="muted small"></div>
+      </div>
+      <div class="toolbar">
+        <button class="primary" id="newBtn" type="button">＋ Nueva factura</button>
+        <button class="light" id="historyBtn" type="button">▤ Gestor de facturas</button>
+        <button class="light" id="previewBtn" type="button">Vista previa</button>
+        <button class="light" id="reloadBtn" type="button">↻ Actualizar datos</button>
+        <button class="danger" id="logoutBtn" type="button">Cerrar sesión</button>
+      </div>
+    </section>
+
+    <section id="editorPanel" class="panel">
+      <div class="panel-heading">
+        <div>
+          <h2 id="editorTitle">Nueva factura</h2>
+          <p class="muted small">Completa los datos y revisa el documento antes de emitirlo.</p>
+        </div>
+        <span class="pill draft" id="editorBadge">BORRADOR</span>
+      </div>
+
+      <form id="invoiceForm">
+        <h3>1. Datos del cliente</h3>
+        <div class="grid">
+          <div class="field"><label for="clientName">Nombre o razón social *</label><input id="clientName" autocomplete="organization" required></div>
+          <div class="field"><label for="clientTax">NIF / DNI / CIF</label><input id="clientTax" autocomplete="off"></div>
+          <div class="field full"><label for="clientAddress">Dirección del cliente</label><input id="clientAddress" autocomplete="street-address"></div>
+          <div class="field"><label for="clientPostal">Código postal</label><input id="clientPostal" autocomplete="postal-code" inputmode="numeric"></div>
+          <div class="field"><label for="clientCity">Población / provincia</label><input id="clientCity" autocomplete="address-level2"></div>
+        </div>
+
+        <div class="divider"></div>
+        <h3>2. Datos de la factura</h3>
+        <div class="grid">
+          <div class="field"><label for="issueDate">Fecha de emisión *</label><input id="issueDate" type="date" required></div>
+          <div class="field"><label for="dueDate">Fecha de vencimiento</label><input id="dueDate" type="date"></div>
+          <div class="field">
+            <label for="payment">Forma de pago</label>
+            <select id="payment">
+              <option>Transferencia</option><option>Efectivo</option><option>Tarjeta</option>
+              <option>Bizum</option><option>Otro</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="invoiceNumber">Número de factura (opcional)</label>
+            <input id="invoiceNumber" type="number" min="1" step="1" inputmode="numeric" placeholder="Automático si está configurado">
+            <span class="field-hint">La numeración automática depende de la configuración de Supabase. Comprueba la numeración antes de emitir.</span>
+          </div>
+          <div class="field">
+            <label for="saveStatus">Estado al guardar</label>
+            <select id="saveStatus"><option value="draft">Guardar como borrador</option><option value="issued">Emitir factura</option></select>
+          </div>
+          <div class="field full">
+            <label for="description">Trabajo realizado / dirección de la obra *</label>
+            <textarea id="description" required placeholder="Describe el trabajo realizado y, si corresponde, la dirección de la obra."></textarea>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="panel-heading">
+          <div>
+            <h3>3. Conceptos y materiales</h3>
+            <p class="muted small">Introduce cada trabajo, material o servicio en una línea.</p>
+          </div>
+          <button type="button" class="light" id="addItemBtn">＋ Añadir concepto</button>
+        </div>
+        <div id="itemsEditor"></div>
+
+        <div class="divider"></div>
+        <h3>4. Datos de pago y observaciones</h3>
+        <div class="grid">
+          <div class="field"><label for="bankHolder">Titular de la transferencia</label><input id="bankHolder" placeholder="Mihai Hostinariu"></div>
+          <div class="field"><label for="bankIban">IBAN</label><input id="bankIban" autocomplete="off" placeholder="ES..."></div>
+          <div class="field full"><label for="notes">Observaciones para el cliente</label><textarea id="notes" placeholder="Información adicional, si procede."></textarea></div>
+        </div>
+
+        <div class="totals" style="margin-top:22px">
+          <div class="total-line"><span>Base imponible</span><strong id="baseView">0,00 €</strong></div>
+          <div class="total-line"><span>IVA total</span><strong id="vatView">0,00 €</strong></div>
+          <div class="total-line"><span>Conceptos</span><strong id="itemsCount">0</strong></div>
+          <div class="grand"><span>TOTAL</span><span id="totalView">0,00 €</span></div>
+        </div>
+
+        <div class="actions" style="margin-top:20px">
+          <button class="primary" type="submit" id="saveBtn">Guardar borrador</button>
+          <button class="orange" type="button" id="saveIssueBtn">Guardar y emitir</button>
+          <button class="light" type="button" id="previewFromEditor">Vista previa</button>
+          <button class="light" type="button" id="clearBtn">Limpiar formulario</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="historyPanel" class="panel hidden">
+      <div class="panel-heading">
+        <div><h2>Gestor de facturas</h2><p class="muted small">Consulta y administra los documentos guardados.</p></div>
+        <button class="light" type="button" id="historyNewBtn">＋ Nueva factura</button>
+      </div>
+      <div class="stats">
+        <div class="stat stat-accent"><span class="stat-label">Total de facturas</span><strong id="countAll">0</strong></div>
+        <div class="stat"><span class="stat-label">Borradores</span><strong id="countDraft">0</strong></div>
+        <div class="stat"><span class="stat-label">Emitidas</span><strong id="countIssued">0</strong></div>
+      </div>
+      <div class="grid">
+        <div class="field"><label for="searchHistory">Buscar por número o cliente</label><input id="searchHistory" placeholder="Escribe un número o nombre"></div>
+        <div class="field"><label for="filterStatus">Filtrar por estado</label>
+          <select id="filterStatus"><option value="">Todos los estados</option><option value="draft">Borradores</option><option value="issued">Emitidas</option><option value="void">Anuladas</option></select>
+        </div>
+      </div>
+      <div class="table-wrap" style="margin-top:17px">
+        <table>
+          <thead><tr><th>Número</th><th>Fecha</th><th>Cliente</th><th>Importe</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody id="historyRows"></tbody>
+        </table>
+      </div>
+      <p class="muted small" style="margin-top:14px">Las facturas emitidas se conservan en el historial. Para corregir una factura emitida, consulta el procedimiento fiscal que corresponda; no basta con cambiar su estado en esta aplicación.</p>
+    </section>
+
+    <section id="previewPanel" class="panel hidden">
+      <div class="preview-toolbar">
+        <div><h2 style="margin-bottom:4px">Vista previa de factura</h2><span class="muted small">Documento preparado para imprimir o guardar en PDF.</span></div>
+        <div class="toolbar">
+          <button type="button" class="light" id="backEditBtn">Volver</button>
+          <button type="button" class="success" id="downloadPdfBtn">↓ Descargar PDF</button>
+          <button type="button" class="primary" id="printBtn">Imprimir</button>
+          <button type="button" class="orange" id="sharePdfBtn">Compartir PDF</button>
+        </div>
+      </div>
+      <article id="paper" aria-label="Vista previa del documento"></article>
+    </section>
+  </section>
+</main>
+
+<script>
+(() => {
+"use strict";
+
+const SUPABASE_URL = "https://wurumaekirvwcqazhlxo.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_akCgUn_kwxcWIZF-i-i6pA_WHslyV29";
+
+const messageEl = document.getElementById("message");
+
+if (!window.supabase) {
+  messageEl.textContent = "No se ha podido cargar Supabase. Comprueba tu conexión a Internet.";
+  messageEl.className = "status error";
+  return;
+}
+
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  }
+});
+
+const $ = id => document.getElementById(id);
+const money = n => new Intl.NumberFormat("es-ES", {
+  style: "currency",
+  currency: "EUR"
+}).format(Number(n || 0));
+
+const num = n => Math.round((Number(n || 0) + Number.EPSILON) * 100) / 100;
+
+const escapeHTML = s => String(s ?? "").replace(/[&<>"']/g, c => ({
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;"
+}[c]));
+
+const today = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+};
+
+const fmtDate = s => {
+  if (!s) return "—";
+  const p = String(s).slice(0,10).split("-");
+  return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : String(s);
+};
+
+let user = null;
+let company = null;
+let invoices = [];
+let editingId = null;
+let editingNumber = null;
+let editingStatus = "draft";
+let busy = false;
+let currentPaperInvoice = null;
+let authSubscription = null;
+
+function say(text = "", error = false, info = false) {
+  const el = $("message");
+  el.textContent = text;
+  el.className = "status" + (error ? " error" : info ? " info" : "");
+}
+
+function showPanel(id) {
+  ["editorPanel", "historyPanel", "previewPanel"].forEach(x => {
+    $(x).classList.toggle("hidden", x !== id);
+  });
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function loginView(on) {
+  $("loginPanel").classList.toggle("hidden", on);
+  $("appPanel").classList.toggle("hidden", !on);
+}
+
+function setBusy(on) {
+  busy = on;
+  ["saveBtn", "saveIssueBtn", "loginBtn", "downloadPdfBtn", "sharePdfBtn"].forEach(id => {
+    if ($(id)) $(id).disabled = on;
+  });
+}
+
+function setEditorStatus(status) {
+  const badge = $("editorBadge");
+  badge.textContent = status === "issued" ? "EMITIDA" : status === "void" ? "ANULADA" : "BORRADOR";
+  badge.className = "pill " + (status === "issued" ? "issued" : status === "void" ? "void" : "draft");
+}
+
+function readItems() {
+  return [...$("itemsEditor").querySelectorAll(".itemrow")].map((row, i) => {
+    const description = row.querySelector(".idesc").value.trim();
+    const quantity = Number(row.querySelector(".iqty").value);
+    const price = Number(row.querySelector(".iprice").value);
+    const vatRate = Number(row.querySelector(".ivat").value);
+    const base = num(quantity * price);
+    const vat = num(base * vatRate / 100);
+
+    return {
+      description,
+      quantity,
+      unit_price: price,
+      vat_rate: vatRate,
+      line_total: base,
+      vat_amount: vat,
+      sort_order: i
+    };
+  }).filter(x =>
+    x.description &&
+    Number.isFinite(x.quantity) &&
+    x.quantity > 0 &&
+    Number.isFinite(x.unit_price) &&
+    x.unit_price >= 0
+  );
+}
+
+function addItem(item = {}) {
+  const row = document.createElement("div");
+  row.className = "itemrow";
+
+  row.innerHTML = `
+    <div class="field itemdesc">
+      <label>Descripción *</label>
+      <input class="idesc" required maxlength="500" placeholder="Mano de obra, materiales..." value="${escapeHTML(item.description || "")}">
+    </div>
+    <div class="field">
+      <label>Cantidad</label>
+      <input class="iqty" type="number" min="0.001" step="0.001" value="${Number(item.quantity ?? 1)}" required>
+    </div>
+    <div class="field">
+      <label>Precio unitario (€)</label>
+      <input class="iprice" type="number" min="0" step="0.01" value="${Number(item.unit_price ?? 0)}" required>
+    </div>
+    <div class="field">
+      <label>IVA (%)</label>
+      <select class="ivat">${[21,10,4,0].map(v =>
+        `<option value="${v}" ${Number(item.vat_rate ?? 21) === v ? "selected" : ""}>${v}%</option>`
+      ).join("")}</select>
+    </div>
+    <div class="field">
+      <label>Base de línea</label>
+      <input class="iline" readonly value="${money(Number(item.line_total || 0))}" aria-label="Base de línea">
+    </div>
+    <button type="button" class="removeitem" title="Quitar concepto" aria-label="Quitar concepto">×</button>
+  `;
+
+  $("itemsEditor").appendChild(row);
+
+  row.querySelectorAll("input,select").forEach(el => {
+    el.addEventListener("input", calculate);
+    el.addEventListener("change", calculate);
+  });
+
+  row.querySelector(".removeitem").addEventListener("click", () => {
+    if ($("itemsEditor").querySelectorAll(".itemrow").length === 1) {
+      say("Debe quedar al menos una línea de concepto.", true);
+      return;
+    }
+    row.remove();
+    calculate();
+  });
+
+  calculate();
+}
+
+function calculate() {
+  let base = 0;
+  let vat = 0;
+  let count = 0;
+
+  $("itemsEditor").querySelectorAll(".itemrow").forEach(row => {
+    const q = Number(row.querySelector(".iqty").value || 0);
+    const p = Number(row.querySelector(".iprice").value || 0);
+    const r = Number(row.querySelector(".ivat").value || 0);
+    const b = num(q * p);
+    const v = num(b * r / 100);
+
+    row.querySelector(".iline").value = money(b);
+
+    if (row.querySelector(".idesc").value.trim()) {
+      base += b;
+      vat += v;
+      count++;
+    }
+  });
+
+  base = num(base);
+  vat = num(vat);
+
+  $("baseView").textContent = money(base);
+  $("vatView").textContent = money(vat);
+  $("totalView").textContent = money(num(base + vat));
+  $("itemsCount").textContent = count;
+
+  return { items: readItems(), base, vat, total: num(base + vat) };
+}
+
+function resetForm() {
+  editingId = null;
+  editingNumber = null;
+  editingStatus = "draft";
+
+  $("invoiceForm").reset();
+  $("issueDate").value = today();
+  $("dueDate").value = "";
+  $("saveStatus").value = "draft";
+  $("invoiceNumber").value = "";
+  $("invoiceNumber").disabled = false;
+  $("editorTitle").textContent = "Nueva factura";
+  $("saveBtn").textContent = "Guardar borrador";
+  $("itemsEditor").replaceChildren();
+
+  addItem();
+  setEditorStatus("draft");
+  showPanel("editorPanel");
+  say("Formulario nuevo. Las facturas guardadas no se han eliminado.");
+}
+
+function fillForm(inv, client, lines) {
+  editingId = inv.id || null;
+  editingNumber = inv.invoice_number ?? null;
+  editingStatus = inv.status || "draft";
+
+  $("clientName").value = client?.name || "";
+  $("clientTax").value = client?.tax_id || "";
+  $("clientAddress").value = client?.address || "";
+  $("clientPostal").value = client?.postal_code || "";
+  $("clientCity").value = [client?.city, client?.province].filter(Boolean).join(", ");
+
+  $("issueDate").value = inv.issue_date || today();
+  $("dueDate").value = inv.due_date || "";
+  $("payment").value = inv.payment_method || "Transferencia";
+  $("saveStatus").value = inv.status === "draft" ? "draft" : "issued";
+  $("invoiceNumber").value = inv.invoice_number ?? "";
+  $("invoiceNumber").disabled = inv.status !== "draft";
+  $("description").value = inv.description || "";
+  $("notes").value = inv.notes || "";
+  $("bankHolder").value = inv.bank_holder || "";
+  $("bankIban").value = inv.bank_iban || "";
+
+  $("itemsEditor").replaceChildren();
+
+  (lines?.length ? lines : [{
+    description: inv.description || "Trabajo realizado",
+    quantity: 1,
+    unit_price: inv.base_amount || 0,
+    vat_rate: inv.vat_rate ?? 21
+  }]).forEach(addItem);
+
+  $("editorTitle").textContent = `${inv.status === "draft" ? "Editar borrador" : "Factura"} ${inv.invoice_number ?? ""}`;
+  $("saveBtn").textContent = "Guardar cambios";
+  setEditorStatus(inv.status);
+  showPanel("editorPanel");
+  calculate();
+}
+
+async function loadCompany() {
+  const { data, error } = await db.from("company_settings").select("*").eq("id", 1).single();
+  if (error) throw error;
+  company = data;
+}
+
+async function findOrCreateClient() {
+  const name = $("clientName").value.trim();
+  const tax = $("clientTax").value.trim();
+  const cityInput = $("clientCity").value.trim();
+  const cityParts = cityInput.split(",").map(s => s.trim()).filter(Boolean);
+
+  const patch = {
+    address: $("clientAddress").value.trim() || null,
+    postal_code: $("clientPostal").value.trim() || null,
+    city: cityParts[0] || null,
+    province: cityParts.slice(1).join(", ") || null,
+    tax_id: tax || null,
+    updated_at: new Date().toISOString()
+  };
+
+  /*
+   * Se busca por nombre y después se comprueba el NIF/DNI.
+   * No se usa el nombre como patrón ilike porque los caracteres
+   * % y _ pueden comportarse como comodines.
+   */
+  const { data, error } = await db.from("clients").select("*").eq("name", name).limit(100);
+  if (error) throw error;
+
+  const found = (data || []).find(c =>
+    String(c.tax_id || "").trim().toLowerCase() === tax.toLowerCase()
+  );
+
+  if (found) {
+    const { data: updated, error: updateError } = await db.from("clients")
+      .update(patch).eq("id", found.id).select("*").single();
+    if (updateError) throw updateError;
+    return updated;
+  }
+
+  const { data: created, error: insertError } = await db.from("clients")
+    .insert({ name, ...patch, created_by: user.id })
+    .select("*").single();
+
+  if (insertError) throw insertError;
+  return created;
+}
+
+async function logAction(action, inv, details = {}) {
+  const { error } = await db.from("audit_log").insert({
+    user_id: user.id,
+    action,
+    entity_type: "invoice",
+    entity_id: inv.id,
+    details
+  });
+
+  if (error) console.warn("No se pudo registrar la actividad:", error.message);
+}
+
+function validateInvoice(calc) {
+  const name = $("clientName").value.trim();
+
+  if (!name) {
+    say("Introduce el nombre del cliente.", true);
+    $("clientName").focus();
+    return false;
+  }
+
+  if (!$("issueDate").value) {
+    say("Introduce la fecha de emisión.", true);
+    $("issueDate").focus();
+    return false;
+  }
+
+  if ($("dueDate").value && $("dueDate").value < $("issueDate").value) {
+    say("La fecha de vencimiento no puede ser anterior a la fecha de emisión.", true);
+    $("dueDate").focus();
+    return false;
+  }
+
+  if (!$("description").value.trim()) {
+    say("Describe el trabajo realizado.", true);
+    $("description").focus();
+    return false;
+  }
+
+  const rows = [...$("itemsEditor").querySelectorAll(".itemrow")];
+
+  if (!rows.length) {
+    say("Añade al menos un concepto.", true);
+    return false;
+  }
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const description = row.querySelector(".idesc").value.trim();
+    const quantity = Number(row.querySelector(".iqty").value);
+    const price = Number(row.querySelector(".iprice").value);
+
+    if (!description) {
+      say(`Añade una descripción al concepto ${i + 1}.`, true);
+      row.querySelector(".idesc").focus();
+      return false;
+    }
+
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      say(`La cantidad del concepto ${i + 1} debe ser mayor que cero.`, true);
+      row.querySelector(".iqty").focus();
+      return false;
+    }
+
+    if (!Number.isFinite(price) || price < 0) {
+      say(`Revisa el precio del concepto ${i + 1}.`, true);
+      row.querySelector(".iprice").focus();
+      return false;
+    }
+  }
+
+  if (!calc.items.length) {
+    say("Añade al menos un concepto válido.", true);
+    return false;
+  }
+
+  const manualRaw = $("invoiceNumber").value.trim();
+
+  if (manualRaw !== "" &&
+      (!Number.isSafeInteger(Number(manualRaw)) || Number(manualRaw) < 1)) {
+    say("El número de factura debe ser un entero mayor que cero.", true);
+    $("invoiceNumber").focus();
+    return false;
+  }
+
+  return true;
+}
+
+async function saveInvoice(forceStatus) {
+  if (!user || busy) return;
+
+  if (editingId && editingStatus !== "draft") {
+    say("Una factura emitida o anulada no se puede editar desde aquí. Duplica el documento o crea una factura nueva.", true);
+    return;
+  }
+
+  const calc = calculate();
+  if (!validateInvoice(calc)) return;
+
+  const status = forceStatus || $("saveStatus").value;
+  const manualRaw = $("invoiceNumber").value.trim();
+  const manualNumber = manualRaw === "" ? null : Number(manualRaw);
+
+  if (status === "issued" &&
+      !confirm("¿Has revisado los datos, el cliente, los conceptos, el IVA y el total y quieres emitir esta factura?")) {
+    return;
+  }
+
+  setBusy(true);
+  say("Guardando la factura…", false, true);
+
+  try {
+    const client = await findOrCreateClient();
+
+    const payload = {
+      client_id: client.id,
+      issue_date: $("issueDate").value,
+      due_date: $("dueDate").value || null,
+      payment_method: $("payment").value,
+      status,
+      description: $("description").value.trim(),
+      base_amount: calc.base,
+      vat_rate: calc.items.length && calc.items.every(x => x.vat_rate === calc.items[0].vat_rate)
+        ? calc.items[0].vat_rate : null,
+      vat_amount: calc.vat,
+      total_amount: calc.total,
+      notes: $("notes").value.trim() || null,
+      bank_holder: $("bankHolder").value.trim() || null,
+      bank_iban: $("bankIban").value.trim() || null,
+      updated_at: new Date().toISOString(),
+      created_by: user.id
+    };
+
+    if (manualNumber !== null) payload.invoice_number = manualNumber;
+    else if (editingId) payload.invoice_number = editingNumber;
+
+    let inv;
+
+    if (editingId) {
+      const { data, error } = await db.from("invoices").update(payload)
+        .eq("id", editingId).eq("status", "draft").select("*").single();
+
+      if (error) throw error;
+      inv = data;
+
+      /*
+       * Si falla la sustitución de líneas, se informa expresamente.
+       * Supabase REST no ofrece una transacción automática entre
+       * estas llamadas independientes.
+       */
+      const { error: deleteError } = await db.from("invoice_items")
+        .delete().eq("invoice_id", inv.id);
+
+      if (deleteError) {
+        throw new Error("La cabecera se actualizó, pero no se pudieron sustituir los conceptos. Revisa el borrador en Supabase. " + deleteError.message);
+      }
+    } else {
+      const { data, error } = await db.from("invoices")
+        .insert(payload).select("*").single();
+
+      if (error) throw error;
+      inv = data;
+    }
+
+    if (!inv || !inv.id) {
+      throw new Error("Supabase no devolvió el identificador de la factura guardada.");
+    }
+
+    const rows = calc.items.map(x => ({ ...x, invoice_id: inv.id }));
+
+    const { error: itemError } = await db.from("invoice_items").insert(rows);
+
+    if (itemError) {
+      say(
+        "ATENCIÓN: la cabecera de la factura se guardó, pero los conceptos no. No emitas ni utilices este documento hasta revisarlo en Supabase. Error: " + itemError.message,
+        true
+      );
+      try { await loadHistory(); } catch (historyError) {
+        console.error("No se pudo actualizar el historial:", historyError);
+      }
+      return;
+    }
+
+    await logAction(
+      editingId ? "invoice_updated" : status === "draft" ? "invoice_draft_created" : "invoice_issued",
+      inv,
+      { invoice_number: inv.invoice_number, status }
+    );
+
+    editingId = inv.id;
+    editingNumber = inv.invoice_number;
+    editingStatus = inv.status;
+
+    $("invoiceNumber").value = inv.invoice_number ?? "";
+    $("invoiceNumber").disabled = inv.status !== "draft";
+    setEditorStatus(inv.status);
+
+    say(`Factura ${inv.invoice_number ?? ""} guardada como ${status === "draft" ? "borrador" : "emitida"}.`);
+
+    await loadHistory();
+
+    if (status === "issued") {
+      await openSavedInvoice(inv.id);
+      showPanel("previewPanel");
+    } else {
+      $("editorTitle").textContent = `Editar borrador ${inv.invoice_number ?? ""}`;
+      $("saveBtn").textContent = "Guardar cambios";
+    }
+  } catch (e) {
+    console.error(e);
+    say(
+      "No se pudo completar el guardado: " +
+      (e.message || "error desconocido") +
+      ". Comprueba la conexión, las tablas y las políticas de Supabase. Si la cabecera ya se había guardado, revisa el borrador antes de volver a intentarlo.",
+      true
+    );
+  } finally {
+    setBusy(false);
+  }
+}
+
+async function loadHistory() {
+  const { data, error } = await db.from("invoices")
+    .select("*,clients(id,name,tax_id,address,postal_code,city,province)")
+    .order("invoice_number", { ascending: false })
+    .limit(500);
+
+  if (error) throw error;
+  invoices = data || [];
+  renderHistory();
+}
+
+function renderHistory() {
+  const search = $("searchHistory").value.trim().toLocaleLowerCase("es");
+  const status = $("filterStatus").value;
+
+  const filtered = invoices.filter(i =>
+    (!status || i.status === status) &&
+    (
+      String(i.invoice_number ?? "").toLocaleLowerCase("es").includes(search) ||
+      String(i.clients?.name || "").toLocaleLowerCase("es").includes(search)
+    )
+  );
+
+  $("countAll").textContent = invoices.length;
+  $("countDraft").textContent = invoices.filter(i => i.status === "draft").length;
+  $("countIssued").textContent = invoices.filter(i => i.status === "issued").length;
+
+  const body = $("historyRows");
+  body.replaceChildren();
+
+  if (!filtered.length) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 6;
+    td.className = "empty-state";
+    td.textContent = invoices.length
+      ? "No hay facturas que coincidan con la búsqueda."
+      : "Todavía no hay facturas guardadas.";
+    tr.appendChild(td);
+    body.appendChild(tr);
+    return;
+  }
+
+  filtered.forEach(inv => {
+    const tr = document.createElement("tr");
+    const statusText = {
+      draft: "Borrador",
+      issued: "Emitida",
+      void: "Anulada"
+    }[inv.status] || inv.status || "Desconocido";
+
+    [
+      String(inv.invoice_number ?? "—"),
+      fmtDate(inv.issue_date),
+      inv.clients?.name || "Cliente",
+      money(inv.total_amount)
+    ].forEach((v, idx) => {
+      const td = document.createElement("td");
+      td.textContent = v;
+      if (idx === 3) td.className = "right";
+      tr.appendChild(td);
+    });
+
+    const st = document.createElement("td");
+    const pill = document.createElement("span");
+    pill.className = "pill " + (inv.status || "draft");
+    pill.textContent = statusText;
+    st.appendChild(pill);
+    tr.appendChild(st);
+
+    const actions = document.createElement("td");
+    const actionWrap = document.createElement("div");
+    actionWrap.className = "mobile-actions";
+
+    const addBtn = (label, cls, fn) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = label;
+      b.className = cls;
+      b.addEventListener("click", fn);
+      actionWrap.appendChild(b);
+    };
+
+    addBtn("Ver / PDF", "light", async () => {
+      try {
+        await openSavedInvoice(inv.id);
+        showPanel("previewPanel");
+      } catch (e) {
+        say("No se pudo abrir la factura: " + e.message, true);
+      }
+    });
+
+    if (inv.status === "draft") {
+      addBtn("Editar", "primary", async () => {
+        try {
+          const { data: lines, error } = await db.from("invoice_items")
+            .select("*").eq("invoice_id", inv.id).order("sort_order");
+
+          if (error) throw error;
+          fillForm(inv, inv.clients, lines || []);
+          say("Editando borrador " + inv.invoice_number);
+        } catch (e) {
+          say("No se pudo cargar el borrador: " + e.message, true);
+        }
+      });
+
+      addBtn("Emitir", "orange", async () => {
+        if (!confirm(`¿Emitir la factura ${inv.invoice_number}? Revisa primero el documento completo.`)) return;
+
+        try {
+          const { data, error } = await db.from("invoices").update({
+            status: "issued",
+            updated_at: new Date().toISOString()
+          }).eq("id", inv.id).eq("status", "draft").select("*").single();
+
+          if (error) throw error;
+
+          await logAction("invoice_issued", data, { invoice_number: data.invoice_number });
+          say("Factura marcada como emitida.");
+          await loadHistory();
+        } catch (e) {
+          say("No se pudo emitir: " + e.message, true);
+        }
+      });
+    } else if (inv.status === "issued") {
+      addBtn("Anular", "danger", async () => {
+        if (!confirm(`¿Marcar la factura ${inv.invoice_number} como anulada? Se conservará en el historial.`)) return;
+
+        try {
+          const { data, error } = await db.from("invoices").update({
+            status: "void",
+            updated_at: new Date().toISOString()
+          }).eq("id", inv.id).eq("status", "issued").select("*").single();
+
+          if (error) throw error;
+
+          await logAction("invoice_voided", data, { invoice_number: data.invoice_number });
+          say("Factura marcada como anulada. Revisa el procedimiento fiscal que corresponda.");
+          await loadHistory();
+        } catch (e) {
+          say("No se pudo anular: " + e.message, true);
+        }
+      });
+    }
+
+    addBtn("Duplicar", "light", async () => {
+      try {
+        const { data: lines, error } = await db.from("invoice_items")
+          .select("*").eq("invoice_id", inv.id).order("sort_order");
+
+        if (error) throw error;
+
+        fillForm({
+          ...inv,
+          id: null,
+          invoice_number: null,
+          status: "draft",
+          issue_date: today(),
+          due_date: null
+        }, inv.clients, lines || []);
+
+        editingId = null;
+        editingNumber = null;
+        editingStatus = "draft";
+
+        $("invoiceNumber").value = "";
+        $("invoiceNumber").disabled = false;
+        $("issueDate").value = today();
+        $("dueDate").value = "";
+        $("editorTitle").textContent = "Nueva factura · Copia";
+        $("saveBtn").textContent = "Guardar borrador";
+        $("saveStatus").value = "draft";
+        setEditorStatus("draft");
+
+        say("Copia preparada como borrador nuevo. Revisa la fecha, los datos y la numeración antes de guardarla.");
+      } catch (e) {
+        say("No se pudo duplicar: " + e.message, true);
+      }
+    });
+
+    if (inv.status === "draft") {
+      addBtn("Eliminar borrador", "danger", async () => {
+        if (!confirm(`¿Eliminar el borrador ${inv.invoice_number}? Esta acción no se puede deshacer.`)) return;
+
+        try {
+          const { error: lineError } = await db.from("invoice_items")
+            .delete().eq("invoice_id", inv.id);
+
+          if (lineError) throw lineError;
+
+          const { error: invoiceError } = await db.from("invoices")
+            .delete().eq("id", inv.id).eq("status", "draft");
+
+          if (invoiceError) throw invoiceError;
+
+          await logAction("invoice_draft_deleted", inv, {
+            invoice_number: inv.invoice_number,
+            status: inv.status
+          });
+
+          say(`Borrador ${inv.invoice_number} eliminado.`);
+          await loadHistory();
+        } catch (e) {
+          say("No se pudo eliminar el borrador. Comprueba los permisos de Supabase: " + e.message, true);
+        }
+      });
+    }
+
+    actions.appendChild(actionWrap);
+    tr.appendChild(actions);
+    body.appendChild(tr);
+  });
+}
+
+function buildPaper(inv, client, lines) {
+  const c = company || {};
+
+  const totalBase = num(lines.reduce((s, x) => s + Number(x.line_total || 0), 0));
+  const totalVat = num(lines.reduce((s, x) =>
+    s + Number(x.vat_amount ?? Number(x.line_total || 0) * Number(x.vat_rate || 0) / 100), 0
+  ));
+  const total = num(inv.total_amount ?? totalBase + totalVat);
+
+  const lineHTML = lines.map(x => {
+    const lineBase = Number(x.line_total || 0);
+    const lineVat = Number(x.vat_amount ?? lineBase * Number(x.vat_rate || 0) / 100);
+
+    return `<tr>
+      <td>${escapeHTML(x.description)}</td>
+      <td>${Number(x.quantity || 0).toLocaleString("es-ES", { maximumFractionDigits: 3 })}</td>
+      <td>${money(x.unit_price)}</td>
+      <td>${Number(x.vat_rate || 0)}%</td>
+      <td>${money(lineVat)}</td>
+      <td><strong>${money(lineBase + lineVat)}</strong></td>
+    </tr>`;
+  }).join("");
+
+  const companyName = c.owner_name || "Mihai Hostinariu";
+  const companyTax = c.tax_id || "X6690Q141Q";
+  const companyAddress = c.address || "C/ Deseminado N°3387";
+  const companyPostal = c.postal_code || "46160";
+  const companyCity = c.city || "Llíria";
+  const companyPhone = c.phone || "+34 666 210 205";
+  const companyEmail = c.email || "Rglmihai@hotmail.com";
+  const clientCity = [client?.postal_code, client?.city, client?.province].filter(Boolean).join(" ");
+
+  const rates = [...new Set(lines.map(x => Number(x.vat_rate || 0)))].sort((a, b) => b - a);
+
+  const vatRows = rates.map(rate => {
+    const vat = lines.filter(x => Number(x.vat_rate || 0) === rate)
+      .reduce((s, x) =>
+        s + Number(x.vat_amount ?? Number(x.line_total || 0) * rate / 100), 0
+      );
+
+    const baseForRate = lines.filter(x => Number(x.vat_rate || 0) === rate)
+      .reduce((s, x) => s + Number(x.line_total || 0), 0);
+
+    return `
+      <div class="total-line">
+        <span>Base IVA ${rate}%</span>
+        <strong>${money(num(baseForRate))}</strong>
+      </div>
+      <div class="total-line">
+        <span>IVA ${rate}%</span>
+        <strong>${money(num(vat))}</strong>
+      </div>`;
+  }).join("");
+
+  const statusLabel = inv.status === "draft"
+    ? "BORRADOR"
+    : inv.status === "void" ? "ANULADA" : "FACTURA";
+
+  const numberText = `${String(inv.issue_date || today()).slice(0, 4)} N${inv.invoice_number ?? "BORRADOR"}`;
+
+  $("paper").innerHTML = `
+    <div class="paper-top"></div>
+    <div class="paper-head">
+      <div class="brand">
+        <div class="mark">MH</div>
+        <div>
+          <h2>${escapeHTML(companyName)}</h2>
+          <p>ALBAÑILERÍA · REFORMAS · CONSTRUCCIÓN</p>
+        </div>
+      </div>
+      <div class="doc">
+        <span class="doc-tag">${statusLabel}</span>
+        <div class="doc-number">${escapeHTML(numberText)}</div>
+        <div class="doc-meta">
+          Fecha <strong>${fmtDate(inv.issue_date)}</strong><br>
+          Pago <strong>${escapeHTML(inv.payment_method || "—")}</strong>
+          ${inv.due_date ? `<br>Vencimiento <strong>${fmtDate(inv.due_date)}</strong>` : ""}
+        </div>
+      </div>
+    </div>
+
+    <div class="parties">
+      <section class="party">
+        <div class="party-title">● EMISOR</div>
+        <strong>${escapeHTML(companyName)}</strong>
+        <div class="party-lines">${escapeHTML("NIF: " + companyTax)}
+${escapeHTML(companyAddress)}
+${escapeHTML([c.additional_address, companyPostal, companyCity].filter(Boolean).join(" · "))}
+${escapeHTML(companyPhone)}
+${escapeHTML(companyEmail)}</div>
+      </section>
+      <section class="party client">
+        <div class="party-title">● CLIENTE</div>
+        <strong>${escapeHTML(client?.name || "Cliente")}</strong>
+        <div class="party-lines">${escapeHTML(client?.tax_id ? "NIF/DNI/CIF: " + client.tax_id : "")}
+${escapeHTML(client?.address || "")}
+${escapeHTML(clientCity)}</div>
+      </section>
+    </div>
+
+    <div class="workbox">
+      <div class="label">CONCEPTO / TRABAJO REALIZADO</div>
+      <div class="desc">${escapeHTML(inv.description || "Trabajo realizado")}</div>
+    </div>
+
+    <table class="paper-table">
+      <thead>
+        <tr>
+          <th>DESCRIPCIÓN</th>
+          <th>CANT.</th>
+          <th>PRECIO</th>
+          <th>IVA</th>
+          <th>IMP. IVA</th>
+          <th>TOTAL</th>
+        </tr>
+      </thead>
+      <tbody>${lineHTML}</tbody>
+    </table>
+
+    <div class="bottom-grid">
+      <div class="bankbox">
+        <h3>DATOS PARA LA TRANSFERENCIA</h3>
+        ${inv.bank_holder || inv.bank_iban
+          ? `<p><strong>Titular:</strong> ${escapeHTML(inv.bank_holder || companyName)}</p>
+             ${inv.bank_iban ? `<p><strong>IBAN:</strong> ${escapeHTML(inv.bank_iban)}</p>` : ""}
+             <p><strong>Concepto:</strong> Factura ${escapeHTML(inv.invoice_number ?? "")}</p>`
+          : `<p>Forma de pago: ${escapeHTML(inv.payment_method || "—")}</p>
+             <p>Gracias por confiar en nuestros servicios.</p>`}
+      </div>
+      <div class="paper-totals">
+        <div class="total-line"><span>Base imponible</span><strong>${money(totalBase)}</strong></div>
+        ${vatRows}
+        <div class="grand"><span>TOTAL FACTURA</span><span>${money(total)}</span></div>
+      </div>
+    </div>
+
+    ${inv.notes ? `<div class="paper-notes"><strong>Observaciones:</strong>
+${escapeHTML(inv.notes)}</div>` : ""}
+
+    <div class="paper-footer">
+      <div>
+        <strong>${escapeHTML(companyName)}</strong> · NIF: ${escapeHTML(companyTax)}<br>
+        ${escapeHTML(companyCity)} · ${escapeHTML(companyPhone)} · ${escapeHTML(companyEmail)}
+      </div>
+      <div class="footer-thanks" style="text-align:right">Gracias por su confianza.</div>
+    </div>
+  `;
+
+  currentPaperInvoice = inv;
+}
+
+async function openSavedInvoice(id) {
+  const { data: inv, error } = await db.from("invoices")
+    .select("*,clients(*)").eq("id", id).single();
+
+  if (error) throw error;
+
+  const { data: lines, error: lineError } = await db.from("invoice_items")
+    .select("*").eq("invoice_id", id).order("sort_order");
+
+  if (lineError) throw lineError;
+
+  buildPaper(inv, inv.clients, lines || []);
+}
+
+function previewCurrent() {
+  if (!$("invoiceForm").reportValidity()) return;
+
+  const calc = calculate();
+  if (!validateInvoice(calc)) return;
+
+  const cityParts = $("clientCity").value.split(",").map(s => s.trim()).filter(Boolean);
+
+  const client = {
+    name: $("clientName").value.trim(),
+    tax_id: $("clientTax").value.trim(),
+    address: $("clientAddress").value.trim(),
+    postal_code: $("clientPostal").value.trim(),
+    city: cityParts[0] || "",
+    province: cityParts.slice(1).join(", ")
+  };
+
+  const inv = {
+    invoice_number: $("invoiceNumber").value.trim() || editingNumber || "BORRADOR",
+    issue_date: $("issueDate").value,
+    due_date: $("dueDate").value,
+    payment_method: $("payment").value,
+    status: editingStatus,
+    description: $("description").value,
+    base_amount: calc.base,
+    vat_amount: calc.vat,
+    total_amount: calc.total,
+    notes: $("notes").value,
+    bank_holder: $("bankHolder").value,
+    bank_iban: $("bankIban").value
+  };
+
+  buildPaper(inv, client, calc.items);
+  showPanel("previewPanel");
+}
+
+function pdfFileName() {
+  const n = currentPaperInvoice?.invoice_number ?? "Factura";
+  const y = String(currentPaperInvoice?.issue_date || today()).slice(0, 4);
+  return `Factura_${y}_${String(n).replace(/[^a-zA-Z0-9_-]+/g, "_")}.pdf`;
+}
+
+/*
+ * Se genera el PDF con un ancho fijo adecuado para A4.
+ * No se fuerza todo el documento a una sola página: si hay muchos
+ * conceptos, el PDF puede continuar en páginas adicionales para
+ * evitar que el texto se vuelva ilegible.
+ */
+async function createPdfBlob() {
+  const element = $("paper");
+
+  if (!element.innerHTML.trim()) {
+    throw new Error("Primero abre o previsualiza una factura.");
+  }
+
+  if (typeof window.html2pdf !== "function") {
+    throw new Error("No se ha cargado el generador de PDF. Comprueba la conexión.");
+  }
+
+  const options = {
+    margin: [8, 8, 8, 8],
+    filename: pdfFileName(),
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      allowTaint: false,
+      backgroundColor: "#ffffff",
+      logging: false,
+      scrollY: 0
+    },
+    jsPDF: {
+      unit: "mm",
+      format: "a4",
+      orientation: "portrait",
+      compress: true
+    },
+    pagebreak: {
+      mode: ["css", "legacy"],
+      before: [],
+      after: [],
+      avoid: [
+        ".paper-head",
+        ".party",
+        ".workbox",
+        ".paper-table tr",
+        ".bottom-grid",
+        ".bankbox",
+        ".paper-totals",
+        ".paper-notes",
+        ".paper-footer"
+      ]
+    }
+  };
+
+  const worker = window.html2pdf().set(options).from(element).toPdf();
+  const pdf = await worker.get("pdf");
+
+  if (!pdf || pdf.getNumberOfPages() < 1) {
+    throw new Error("El PDF se ha generado vacío. Vuelve a intentarlo.");
+  }
+
+  return pdf.output("blob");
+}
+
+/* Acceso y sesión */
+$("loginForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (busy) return;
+
+  setBusy(true);
+  say("Iniciando sesión…", false, true);
+
+  try {
+    const { data, error } = await db.auth.signInWithPassword({
+      email: $("loginEmail").value.trim(),
+      password: $("loginPassword").value
+    });
+
+    if (error) throw error;
+
+    user = data.user;
+    loginView(true);
+    $("userLabel").textContent = "Sesión: " + (user.email || "Usuario autorizado");
+
+    await loadCompany();
+    await loadHistory();
+    resetForm();
+    say("Sesión iniciada. Datos cargados.");
+  } catch (e) {
+    console.error(e);
+    say(
+      "No se pudo iniciar sesión o cargar los datos. Comprueba las credenciales, la conexión y la configuración de Supabase. " +
+      (e.message || ""),
+      true
+    );
+  } finally {
+    setBusy(false);
+  }
+});
+
+$("logoutBtn").addEventListener("click", async () => {
+  try {
+    const { error } = await db.auth.signOut();
+    if (error) throw error;
+
+    user = null;
+    company = null;
+    invoices = [];
+    loginView(false);
+    say("Sesión cerrada.");
+  } catch (e) {
+    say("No se pudo cerrar la sesión: " + e.message, true);
+  }
+});
+
+/* Facturas */
+$("invoiceForm").addEventListener("submit", e => {
+  e.preventDefault();
+  saveInvoice("draft");
+});
+
+$("addItemBtn").addEventListener("click", () => addItem());
+$("saveIssueBtn").addEventListener("click", () => saveInvoice("issued"));
+$("previewBtn").addEventListener("click", previewCurrent);
+$("previewFromEditor").addEventListener("click", previewCurrent);
+$("backEditBtn").addEventListener("click", () => showPanel("editorPanel"));
+$("newBtn").addEventListener("click", resetForm);
+$("historyNewBtn").addEventListener("click", resetForm);
+
+$("clearBtn").addEventListener("click", () => {
+  if (confirm("¿Limpiar el formulario? Los borradores guardados no se eliminarán.")) {
+    resetForm();
+  }
+});
+
+$("historyBtn").addEventListener("click", async () => {
+  showPanel("historyPanel");
+  try {
+    await loadHistory();
+  } catch (e) {
+    say("Error al cargar el historial: " + e.message, true);
+  }
+});
+
+$("reloadBtn").addEventListener("click", async () => {
+  if (busy) return;
+
+  try {
+    await loadCompany();
+    await loadHistory();
+    say("Datos actualizados.");
+  } catch (e) {
+    say("Error al actualizar los datos: " + e.message, true);
+  }
+});
+
+$("searchHistory").addEventListener("input", renderHistory);
+$("filterStatus").addEventListener("change", renderHistory);
+
+/* Exportación PDF */
+$("downloadPdfBtn").addEventListener("click", async () => {
+  const btn = $("downloadPdfBtn");
+  const old = btn.textContent;
+
+  btn.disabled = true;
+  btn.textContent = "Generando PDF…";
+
+  try {
+    const blob = await createPdfBlob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+
+    a.href = url;
+    a.download = pdfFileName();
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    say("PDF generado. Comprueba la carpeta de descargas de tu navegador.");
+  } catch (e) {
+    console.error(e);
+    say(e.message || "No se pudo generar el PDF.", true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = old;
+  }
+});
+
+$("printBtn").addEventListener("click", () => {
+  try {
+    window.print();
+  } catch (e) {
+    say("No se pudo abrir la impresión. Prueba a descargar el PDF.", true);
+  }
+});
+
+$("sharePdfBtn").addEventListener("click", async () => {
+  const btn = $("sharePdfBtn");
+  const old = btn.textContent;
+
+  btn.disabled = true;
+  btn.textContent = "Preparando…";
+
+  try {
+    const blob = await createPdfBlob();
+    const file = new File([blob], pdfFileName(), { type: "application/pdf" });
+
+    if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+      await navigator.share({
+        files: [file],
+        title: pdfFileName()
+      });
+      say("Proceso de compartir finalizado.");
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+
+      a.href = url;
+      a.download = pdfFileName();
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      say("Este navegador no admite compartir archivos directamente. Se ha descargado el PDF para adjuntarlo manualmente.");
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    }
+  } catch (e) {
+    if (e.name === "AbortError") {
+      say("Compartir cancelado.");
+    } else {
+      console.error(e);
+      say(e.message || "No se pudo compartir el PDF.", true);
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = old;
+  }
+});
+
+/* Recuperación de sesión */
+const authResponse = db.auth.onAuthStateChange((event, session) => {
+  if (event === "SIGNED_OUT") {
+    user = null;
+    company = null;
+    invoices = [];
+    loginView(false);
+  } else if (session?.user) {
+    user = session.user;
+    loginView(true);
+    $("userLabel").textContent = "Sesión: " + (user.email || "Usuario autorizado");
+  }
+});
+
+authSubscription = authResponse?.data?.subscription || null;
+
+async function init() {
+  $("issueDate").value = today();
+  addItem();
+
+  try {
+    const { data, error } = await db.auth.getSession();
+    if (error) throw error;
+
+    if (data.session?.user) {
+      user = data.session.user;
+      loginView(true);
+      $("userLabel").textContent = "Sesión: " + (user.email || "Usuario autorizado");
+
+      await loadCompany();
+      await loadHistory();
+      showPanel("editorPanel");
+    } else {
+      loginView(false);
+    }
+  } catch (e) {
+    console.error(e);
+    loginView(false);
+    say(
+      "No se pudieron cargar los datos iniciales. Comprueba tu conexión, las tablas y las políticas de Supabase. " +
+      (e.message || ""),
+      true
+    );
+  }
+}
+
+init();
+})();
+</script>
+</body>
+</html>
