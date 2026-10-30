@@ -1,0 +1,20 @@
+name = "rgl-mihai-facturacion"
+main = "src/worker.js"
+compatibility_date = "2026-10-30"
+
+[assets]
+directory = "./"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "rgl-mihai-db"
+database_id = "00000000-00000006-00005114-5b0556e8596ca70acbd0c633c074c7f4"
+migrations_dir = "migrations"
+
+[vars]
+COMPANY_NAME = "RGL MIHAI"
+COMPANY_LEGAL_NAME = "Reformas Generales & Limpieza Mihai"
+COMPANY_EMAIL = "Rglmihai@hotmail.com"
