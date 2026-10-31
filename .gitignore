@@ -1,1 +1,6 @@
-node_modules/\n.wrangler/\n.dev.vars\n.env\n
+node_modules/
+.wrangler/
+.dev.vars
+.env
+dist/
+build/
