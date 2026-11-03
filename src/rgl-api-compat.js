@@ -1,38 +1,369 @@
-/* Compatibilidad mínima con la API usada por la web original. No conecta con Supabase. */
+
+/*
+ * RGL MIHAI - API Compatibility Layer
+ * Adaptador entre la web original y Cloudflare Workers + D1.
+ * No utiliza Supabase.
+ */
+
 (() => {
-  const request = async (path, body) => {
-    const r = await fetch(path, {method: body ? "POST" : "GET", credentials:"same-origin",
-      headers: body ? {"content-type":"application/json"} : {}, body: body ? JSON.stringify(body) : undefined});
-    const j = await r.json().catch(()=>({error:"Respuesta no válida del servidor"}));
-    if (!r.ok) throw new Error(j.error || "Error del servidor");
-    return j;
+  "use strict";
+
+  // Evitar inicializaciones duplicadas.
+  if (window.rglApi) {
+    console.warn("[RGL] La API ya está inicializada.");
+    return;
+  }
+
+  const listeners = [];
+
+  /**
+   * Petición al backend.
+   */
+  const request = async (path, body = undefined) => {
+    const options = {
+      method: body !== undefined ? "POST" : "GET",
+      credentials: "same-origin",
+      headers: {
+        "Accept": "application/json"
+      }
+    };
+
+    if (body !== undefined) {
+      options.headers["Content-Type"] = "application/json";
+      options.body = JSON.stringify(body);
+    }
+
+    let response;
+
+    try {
+      response = await fetch(path, options);
+    } catch (error) {
+      console.error("[RGL] Error de conexión:", error);
+      throw new Error(
+        "No se pudo conectar con el servidor. Comprueba tu conexión."
+      );
+    }
+
+    let result;
+
+    try {
+      result = await response.json();
+    } catch {
+      throw new Error(
+        `El servidor devolvió una respuesta no válida (${response.status}).`
+      );
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        result?.error ||
+        result?.message ||
+        `Error del servidor (${response.status}).`
+      );
+    }
+
+    return result;
   };
-  class Query {
-    constructor(table){this.table=table;this.action="select";this.filters=[];this.orderBy=null;this.max=1000;this.payload=null;this.wantSingle=false;this.columns="*";}
-    select(columns="*"){this.columns=columns;return this;}
-    insert(data){this.action="insert";this.payload=data;return this;}
-    update(data){this.action="update";this.payload=data;return this;}
-    delete(){this.action="delete";return this;}
-    eq(column,value){this.filters.push({column,op:"eq",value});return this;}
-    order(column,opts={}){this.orderBy={column,ascending:opts.ascending!==false};return this;}
-    limit(n){this.max=n;return this;}
-    single(){this.wantSingle=true;return this.execute();}
-    then(resolve,reject){return this.execute().then(resolve,reject);}
-    async execute(){
+
+  /**
+   * Ejecuta los eventos de autenticación.
+   */
+  const notifyAuth = (event, session) => {
+    listeners.slice().forEach((callback) => {
       try {
-        const out=await request("/api/query",{table:this.table,action:this.action,payload:this.payload,filters:this.filters,order:this.orderBy,limit:this.max,columns:this.columns});
-        let data=out.data;
-        if(this.wantSingle){if(Array.isArray(data))data=data[0]||null;if(!data)throw new Error("No se encontró el registro solicitado.");}
-        return {data,error:null};
-      } catch(error){return {data:null,error:{message:error.message}};}
+        callback(event, session);
+      } catch (error) {
+        console.error("[RGL] Error en listener:", error);
+      }
+    });
+  };
+
+  /**
+   * Constructor de consultas.
+   */
+  class Query {
+    constructor(table) {
+      this.table = table;
+      this.action = "select";
+      this.filters = [];
+      this.orderBy = null;
+      this.max = 1000;
+      this.payload = null;
+      this.columns = "*";
+      this.singleMode = null;
+    }
+
+    select(columns = "*") {
+      this.columns = columns;
+      return this;
+    }
+
+    insert(data) {
+      this.action = "insert";
+      this.payload = data;
+      return this;
+    }
+
+    update(data) {
+      this.action = "update";
+      this.payload = data;
+      return this;
+    }
+
+    delete() {
+      this.action = "delete";
+      return this;
+    }
+
+    eq(column, value) {
+      this.filters.push({
+        column,
+        op: "eq",
+        value
+      });
+      return this;
+    }
+
+    order(column, options = {}) {
+      this.orderBy = {
+        column,
+        ascending: options.ascending !== false
+      };
+      return this;
+    }
+
+    limit(number) {
+      const value = Number(number);
+
+      if (!Number.isInteger(value) || value < 0) {
+        throw new Error("El límite de consulta no es válido.");
+      }
+
+      this.max = value;
+      return this;
+    }
+
+    single() {
+      this.singleMode = "single";
+      return this.execute();
+    }
+
+    maybeSingle() {
+      this.singleMode = "maybeSingle";
+      return this.execute();
+    }
+
+    then(resolve, reject) {
+      return this.execute().then(resolve, reject);
+    }
+
+    catch(reject) {
+      return this.execute().catch(reject);
+    }
+
+    finally(callback) {
+      return this.execute().finally(callback);
+    }
+
+    async execute() {
+      try {
+        if (!this.table || typeof this.table !== "string") {
+          throw new Error("Nombre de tabla no válido.");
+        }
+
+        const result = await request("/api/query", {
+          table: this.table,
+          action: this.action,
+          payload: this.payload,
+          filters: this.filters,
+          order: this.orderBy,
+          limit: this.max,
+          columns: this.columns
+        });
+
+        let data = result.data;
+
+        if (this.singleMode) {
+          if (Array.isArray(data)) {
+            if (this.singleMode === "single" && data.length !== 1) {
+              throw new Error(
+                data.length === 0
+                  ? "No se encontró el registro solicitado."
+                  : "Se encontraron varios registros."
+              );
+            }
+
+            data = data[0] ?? null;
+          }
+
+          if (
+            this.singleMode === "single" &&
+            data === null
+          ) {
+            throw new Error("No se encontró el registro solicitado.");
+          }
+        }
+
+        return {
+          data,
+          error: null
+        };
+
+      } catch (error) {
+        console.error("[RGL] Error en consulta:", error);
+
+        return {
+          data: null,
+          error: {
+            message: error.message || "Error al consultar la base de datos."
+          }
+        };
+      }
     }
   }
-  const listeners=[];
-  const auth={
-    signInWithPassword:async ({email,password})=>{try{const x=await request("/api/login",{email,password});listeners.forEach(f=>f("SIGNED_IN",{user:x.user}));return {data:{user:x.user},error:null};}catch(e){return {data:null,error:{message:e.message}};}},
-    signOut:async()=>{try{await request("/api/logout",{});listeners.forEach(f=>f("SIGNED_OUT",null));return {error:null};}catch(e){return {error:{message:e.message}};}},
-    getSession:async()=>{try{const x=await request("/api/me");return {data:{session:x.user?{user:x.user}:null},error:null};}catch(e){return {data:{session:null},error:{message:e.message}};}},
-    onAuthStateChange:(fn)=>{listeners.push(fn);return {data:{subscription:{unsubscribe(){const i=listeners.indexOf(fn);if(i>=0)listeners.splice(i,1);}}}};}
+
+  /**
+   * Autenticación.
+   */
+  const auth = {
+    signInWithPassword: async ({ email, password } = {}) => {
+      try {
+        if (!email || !password) {
+          throw new Error("Introduce el correo y la contraseña.");
+        }
+
+        const result = await request("/api/login", {
+          email: String(email).trim(),
+          password: String(password)
+        });
+
+        const session = result.user
+          ? { user: result.user }
+          : null;
+
+        notifyAuth("SIGNED_IN", session);
+
+        return {
+          data: {
+            user: result.user || null,
+            session
+          },
+          error: null
+        };
+
+      } catch (error) {
+        return {
+          data: {
+            user: null,
+            session: null
+          },
+          error: {
+            message: error.message
+          }
+        };
+      }
+    },
+
+    signOut: async () => {
+      try {
+        await request("/api/logout", {});
+
+        notifyAuth("SIGNED_OUT", null);
+
+        return {
+          error: null
+        };
+
+      } catch (error) {
+        return {
+          error: {
+            message: error.message
+          }
+        };
+      }
+    },
+
+    getSession: async () => {
+      try {
+        const result = await request("/api/me");
+
+        const session = result.user
+          ? { user: result.user }
+          : null;
+
+        return {
+          data: { session },
+          error: null
+        };
+
+      } catch (error) {
+        return {
+          data: { session: null },
+          error: {
+            message: error.message
+          }
+        };
+      }
+    },
+
+    getUser: async () => {
+      try {
+        const result = await request("/api/me");
+
+        return {
+          data: {
+            user: result.user || null
+          },
+          error: null
+        };
+
+      } catch (error) {
+        return {
+          data: { user: null },
+          error: {
+            message: error.message
+          }
+        };
+      }
+    },
+
+    onAuthStateChange: (callback) => {
+      if (typeof callback !== "function") {
+        throw new Error("El callback de autenticación no es válido.");
+      }
+
+      listeners.push(callback);
+
+      return {
+        data: {
+          subscription: {
+            unsubscribe() {
+              const index = listeners.indexOf(callback);
+
+              if (index !== -1) {
+                listeners.splice(index, 1);
+              }
+            }
+          }
+        }
+      };
+    }
   };
-  window.rglApi={createClient:()=>({from:(t)=>new Query(t),auth})};
+
+  /**
+   * API pública.
+   */
+  window.rglApi = {
+    createClient() {
+      return {
+        from(table) {
+          return new Query(table);
+        },
+        auth
+      };
+    }
+  };
+
+  console.info("[RGL] API de compatibilidad inicializada correctamente.");
+
 })();
