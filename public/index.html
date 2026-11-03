@@ -15,10 +15,6 @@
 <link rel="manifest" href="manifest.webmanifest">
 <title>RGL Mihai | Panel de facturación</title>
 
-<script src="rgl-api-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
-
 <style>
 :root {
   --navy:#14233f;
@@ -82,7 +78,7 @@ h3{font-size:17px;line-height:1.3;margin:0 0 12px;color:var(--navy)}
 }
 .site-header h1{margin:0;color:white;font-size:clamp(30px,4vw,43px);font-weight:900;letter-spacing:1px;line-height:1.08}
 .site-header .header-inner>div:nth-child(2){min-width:0}
-.site-header p{margin:6px 0 0;color:#e0e8f5;font-size:14px}
+.site-header p{margin:7px 0 0;color:#f0f4fb;font-size:clamp(12px,1.4vw,15px);font-weight:800;letter-spacing:.55px}
 .site-header p.header-subline{font-size:12px;font-weight:500;letter-spacing:0;color:#d2dced}
 .header-tag{
   margin-left:auto;align-self:flex-start;white-space:nowrap;
@@ -180,7 +176,6 @@ tbody tr:hover{background:#fafbfd}
 #itemsEditor{margin-top:14px}
 #invoiceForm>h3{display:flex;align-items:center;gap:9px;margin-top:4px}
 #invoiceForm>h3::before{content:"";display:inline-block;width:4px;height:19px;background:var(--orange);border-radius:4px}
-#conceptosSugeridos{display:none}
 .itemrow input,.itemrow select{padding:10px 8px;min-height:44px}
 .itemrow .iline{background:#edf1f6;font-weight:750}
 .removeitem{min-height:44px;padding:8px;font-size:22px;background:#fff0f0;color:var(--red)}
@@ -196,7 +191,6 @@ tbody tr:hover{background:#fafbfd}
   gap:10px;font-size:20px;font-weight:850
 }
 .preview-toolbar{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;margin-bottom:17px}
-.preview-toolbar .toolbar{margin:0}
 #paper{
   background:#fff;color:#20283a;width:100%;max-width:850px;margin:0 auto;
   padding:36px 38px;border:1px solid #e3e5eb;box-shadow:0 8px 30px #10182d0c;
@@ -206,16 +200,12 @@ tbody tr:hover{background:#fafbfd}
 .paper-head{display:flex;justify-content:space-between;gap:22px;align-items:flex-start;padding-bottom:20px;border-bottom:2px solid var(--navy)}
 .brand{display:flex;gap:13px;align-items:center;min-width:0}
 .mark{flex:0 0 53px;width:53px;height:53px;background:var(--orange);color:#fff;border-radius:13px;display:grid;place-items:center;font-weight:900;font-size:18px}
-.mark.mark-image{display:block;object-fit:contain;background:#fff;border:1px solid var(--line);padding:1px}
 .brand h2{margin:0;font-size:27px;font-weight:950;letter-spacing:.6px;line-height:1.08;color:var(--navy)}
 .brand p{margin:7px 0 0;color:#697487;font-size:9px;line-height:1.45;letter-spacing:.35px;font-weight:850}
 .doc{text-align:right;min-width:170px;flex:0 0 185px}
 .doc-title{font-size:23px;line-height:1.1;font-weight:850;letter-spacing:.4px;color:var(--navy);margin:0 0 5px}
 .doc-number{font-size:15px;font-weight:800;margin:5px 0;overflow-wrap:anywhere;color:var(--ink)}
 .doc-meta{font-size:11px;color:#687286;line-height:1.75}
-.doc-meta .meta-row{display:block}
-.doc-meta strong{color:var(--ink)}
-.doc-tag{display:inline-block;background:var(--navy);color:#fff;border-radius:20px;padding:5px 12px;font-size:10px;font-weight:bold;letter-spacing:1.5px}
 .parties{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:21px 0}
 .party{border:1px solid var(--line);border-top:4px solid var(--orange);border-radius:12px;padding:14px;min-height:0;overflow-wrap:anywhere}
 .party.client{border-top-color:var(--navy)}
@@ -230,12 +220,6 @@ tbody tr:hover{background:#fafbfd}
 .paper-table th{background:var(--navy);color:#fff;padding:9px 5px;letter-spacing:.02em;font-size:9px}
 .paper-table td{padding:8px 5px;border-bottom:1px solid #e3e6ec;overflow-wrap:anywhere;word-break:normal}
 .paper-table td:not(:first-child),.paper-table th:not(:first-child){text-align:right}
-.paper-table th:first-child,.paper-table td:first-child{width:36%;text-align:left}
-.paper-table th:nth-child(2){width:9%}
-.paper-table th:nth-child(3){width:14%}
-.paper-table th:nth-child(4){width:8%}
-.paper-table th:nth-child(5){width:15%}
-.paper-table th:nth-child(6){width:18%}
 .bottom-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:14px;margin-top:16px}
 .bankbox{background:#fff7ed;border:1px solid #f3d6b1;border-radius:11px;padding:13px;font-size:11px;overflow-wrap:anywhere}
 .bankbox h3{font-size:10px;letter-spacing:1.2px;color:#a9560c;margin-bottom:8px}
@@ -245,65 +229,8 @@ tbody tr:hover{background:#fafbfd}
 .paper-totals .grand{margin:0;border-radius:0;font-size:14px;padding:12px}
 .paper-notes{font-size:10px;color:#59677c;margin-top:14px;white-space:pre-wrap;overflow-wrap:anywhere}
 .paper-footer{border-top:1px solid var(--line);margin-top:19px;padding-top:10px;display:flex;justify-content:space-between;gap:14px;font-size:9px;color:#758094}
-.paper-footer>div{min-width:0;overflow-wrap:anywhere}
-.empty-state{text-align:center;padding:28px 15px;color:var(--muted)}
-.mobile-actions{display:flex;flex-wrap:wrap;gap:5px;max-width:420px}
-.mobile-actions button{font-size:12px;min-height:36px;padding:7px 9px}
 
-@media(max-width:1000px){
-  main{padding:18px}
-  .itemrow{grid-template-columns:minmax(150px,2fr) repeat(2,minmax(90px,1fr))}
-  .itemrow .itemdesc{grid-column:1/-1}
-}
-@media(max-width:650px){
-  body{font-size:15px}
-  .site-header{padding:22px 14px;background-position:center}
-  .header-inner{gap:10px;align-items:center;flex-wrap:wrap}
-  .logo-mark.logo-image{width:58px;height:46px;flex:0 0 58px;padding:1px;border-radius:8px}
-  .site-header h1{font-size:clamp(24px,7vw,32px);letter-spacing:.3px}
-  .site-header p{font-size:11px;line-height:1.35}
-  .site-header p.header-subline{font-size:11px}
-  .header-tag{display:none}
-  main{padding:11px 9px 25px}
-  .panel{padding:16px;margin-bottom:13px;border-radius:14px}
-  .grid,.stats{grid-template-columns:minmax(0,1fr)}
-  .full{grid-column:auto}
-  .toolbar,.actions{display:grid;grid-template-columns:minmax(0,1fr)}
-  .toolbar button,.actions button{width:100%;min-height:48px}
-  .login-banner{min-height:150px;padding:22px}
-  .login-banner h2{font-size:24px}
-  .login-body{padding:21px}
-  .itemrow{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:11px}
-  .itemrow .itemdesc,.itemrow .removeitem{grid-column:1/-1}
-  .itemrow .removeitem{width:100%}
-  .preview-toolbar{align-items:stretch}
-  .preview-toolbar>div,.preview-toolbar .toolbar{width:100%}
-  #paper{padding:18px 12px}
-  .paper-top{margin:-18px -12px 17px;height:5px}
-  .paper-head{gap:8px;padding-bottom:13px}
-  .brand{gap:7px;align-items:flex-start}
-  .mark{flex-basis:36px;width:36px;height:36px;border-radius:9px;font-size:13px}
-  .brand h2{font-size:18px}
-  .brand p{font-size:7px;letter-spacing:.15px}
-  .doc{flex:1;min-width:110px}
-  .doc-title{font-size:18px}
-  .doc-number{font-size:12px}
-  .doc-tag{font-size:8px;padding:4px 7px;letter-spacing:.7px}
-  .doc-meta{font-size:9px;line-height:1.6}
-  .parties,.bottom-grid{grid-template-columns:minmax(0,1fr);gap:10px}
-  .parties{margin:14px 0}
-  .party{padding:11px}
-  .workbox{margin:12px 0;padding:11px}
-  .paper-table{font-size:8px;margin:12px 0}
-  .paper-table th{font-size:7px;padding:6px 2px}
-  .paper-table td{padding:6px 2px}
-  .paper-footer{flex-direction:column}
-  .paper-footer .footer-thanks{text-align:left!important}
-  .table-wrap table{min-width:700px}
-  .totals{width:100%}
-}
-
-/* Gestión de clientes: diseño táctil y adaptable a móvil */
+/* Estilos de gestión de clientes y adaptabilidad móvil */
 .client-manager{border:1px solid var(--line);border-radius:14px;padding:16px;background:#fff;margin-top:14px}
 .client-manager .client-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .client-manager .client-form-grid .full{grid-column:1/-1}
@@ -313,58 +240,22 @@ tbody tr:hover{background:#fafbfd}
 .client-card .client-meta{font-size:13px;color:var(--muted);line-height:1.55;overflow-wrap:anywhere}
 .client-card .client-card-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .client-card .client-card-actions button{min-height:42px;flex:1 1 110px}
-.client-manager .client-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.client-manager .client-toolbar .field{flex:1 1 220px;margin:0}
-.client-manager .client-count{font-size:12px;color:var(--muted)}
-@media(max-width:650px){
-  .client-manager{padding:12px}
-  .client-manager .client-form-grid,.client-manager .client-list{grid-template-columns:minmax(0,1fr)}
-  .client-manager .client-form-grid .full{grid-column:auto}
-  .client-manager .client-toolbar{display:grid;grid-template-columns:minmax(0,1fr)}
-  .client-manager .client-toolbar button{width:100%;min-height:46px}
-  .client-card .client-card-actions{display:grid;grid-template-columns:minmax(0,1fr)}
-  .client-card .client-card-actions button{width:100%;min-height:46px}
-}
-@media(prefers-reduced-motion:reduce){
-  *,*::before,*::after{scroll-behavior:auto!important;transition:none!important}
-}
 
-@page{size:A4 portrait;margin:9mm}
-@media print{
-  html,body{width:100%!important;min-width:0!important;margin:0!important;padding:0!important;background:#fff!important}
-  body{font-size:9pt}
-  body *{visibility:hidden!important}
-  #paper,#paper *{visibility:visible!important}
-  #paper{
-    position:absolute;left:0;top:0;width:192mm;max-width:192mm;min-width:0;min-height:0;
-    margin:0;padding:0;border:0;box-shadow:none;overflow:visible
-  }
-  #paper .paper-head{display:grid!important;grid-template-columns:minmax(0,1fr) 43mm!important;align-items:start!important;gap:4mm!important}
-  #paper .brand{min-width:0!important;display:flex!important}
-  #paper .brand h2,#paper .brand p{overflow-wrap:anywhere}
-  #paper .doc{width:43mm!important;min-width:0!important;max-width:43mm!important;flex:none!important}
-  #paper .parties{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
-  #paper .bottom-grid{display:grid!important;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)!important}
-  #paper .paper-table{width:100%!important;min-width:0!important;table-layout:fixed!important}
-  #paper .paper-table th,#paper .paper-table td{overflow-wrap:anywhere;word-break:normal}
-  .paper-top{margin:0 0 6mm;height:2mm}
-  .paper-head{padding-bottom:3mm}
-  .parties{margin:4mm 0;gap:3mm}
-  .party{padding:2.5mm}
-  .workbox{margin:3mm 0;padding:2.5mm}
-  .paper-table{margin:3mm 0;font-size:7.5pt}
-  .paper-table th,.paper-table td{padding:1.6mm 1mm}
-  .bottom-grid{gap:3mm;margin-top:3mm}
-  .bankbox{padding:2.5mm}
-  .paper-totals .total-line{padding:2mm 2.5mm}
-  .paper-totals .grand{padding:2.5mm;font-size:11pt}
-  .paper-footer{margin-top:4mm;padding-top:2.5mm}
-  .paper-head,.parties,.party,.workbox,.bottom-grid,.bankbox,.paper-totals,.paper-notes,.paper-footer{
-    break-inside:avoid;page-break-inside:avoid
-  }
-  .paper-table{page-break-inside:auto}
-  .paper-table thead{display:table-header-group}
-  .paper-table tr{break-inside:avoid;page-break-inside:avoid}
+@media(max-width:650px){
+  .site-header{padding:22px 14px}
+  .header-inner{gap:10px;align-items:center;flex-wrap:wrap}
+  .site-header h1{font-size:clamp(24px,7vw,32px)}
+  main{padding:11px 9px 25px}
+  .panel{padding:16px;margin-bottom:13px;border-radius:14px}
+  .grid,.stats{grid-template-columns:minmax(0,1fr)}
+  .full{grid-column:auto}
+  .toolbar,.actions{display:grid;grid-template-columns:minmax(0,1fr)}
+  .toolbar button,.actions button{width:100%;min-height:48px}
+  .itemrow{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:11px}
+  .itemrow .itemdesc,.itemrow .removeitem{grid-column:1/-1}
+  .itemrow .removeitem{width:100%}
+  #paper{padding:18px 12px}
+  .parties,.bottom-grid{grid-template-columns:minmax(0,1fr);gap:10px}
 }
 </style>
 </head>
@@ -372,117 +263,127 @@ tbody tr:hover{background:#fafbfd}
 <body>
 <header class="site-header">
   <div class="header-inner">
-    <div class="logo-mark">RGL</div>
+    <div class="logo-mark">RM</div>
     <div>
-      <h1>RGL Mihai</h1>
-      <p>Panel privado de facturación</p>
-      <p class="header-subline">Albañilería, reformas, construcción y limpiezas</p>
+      <h1>RGL MIHAI</h1>
+      <p>Panel Privado de Facturación y Gestión</p>
+      <p class="header-subline">Albañilería, Reformas, Construcción y Limpiezas</p>
     </div>
-    <div class="header-tag">Sistema de Gestión</div>
+    <div class="header-tag">Cloudflare D1 Stack</div>
   </div>
 </header>
 
 <main>
-  <div id="statusMessage" class="status hidden"></div>
-
-  <!-- Panel de Inicio de Sesión -->
+  <!-- PANEL DE LOGIN -->
   <section id="loginPanel" class="panel">
     <div class="login-banner">
-      <h2>Acceso al Sistema</h2>
-      <p>Gestión interna de facturas y clientes</p>
+      <h2>Acceso Restringido</h2>
+      <p>Introduce tu contraseña de acceso para administrar facturas y clientes.</p>
     </div>
     <div class="login-body">
-      <form id="loginForm" onsubmit="event.preventDefault();">
+      <div id="loginStatus" class="status error hidden"></div>
+      <form id="loginForm" onsubmit="handleLogin(event)">
         <div class="field">
-          <label for="loginPass">Contraseña de Acceso</label>
-          <input type="password" id="loginPass" placeholder="Introduce la contraseña" autocomplete="current-password" required>
+          <label for="accessPassword">Contraseña de Administrador</label>
+          <input type="password" id="accessPassword" required placeholder="••••••••••••">
         </div>
-        <button type="submit" class="primary">Iniciar Sesión</button>
+        <button type="submit" class="primary">Entrar al Panel</button>
       </form>
       <div class="login-security">
-        Panel de uso exclusivo para RGL Mihai. Acceso restringido.
+        Conectado de forma segura a Cloudflare Workers y D1 Database.
       </div>
     </div>
   </section>
 
-  <!-- Contenido Principal (oculto por defecto hasta la autenticación) -->
-  <div id="appContent" class="hidden">
-    <!-- Panel Estadístico -->
-    <section class="stats">
-      <div class="stat stat-accent">
-        <span class="stat-label">Facturado este mes</span>
-        <strong id="statMonth">0,00 €</strong>
-      </div>
-      <div class="stat">
-        <span class="stat-label">Total Emisor (Año)</span>
-        <strong id="statYear">0,00 €</strong>
-      </div>
-      <div class="stat">
-        <span class="stat-label">Facturas Emitidas</span>
-        <strong id="statCount">0</strong>
-      </div>
-    </section>
-
-    <!-- Toolbar Global -->
-    <section class="panel">
-      <div class="toolbar">
-        <button class="primary" onclick="showInvoiceForm()">Nueva Factura</button>
-        <button class="light" onclick="showClientManager()">Gestión de Clientes</button>
-        <button class="light" onclick="showInvoiceList()">Listado de Facturas</button>
-      </div>
-    </section>
-
-    <!-- Gestión de Clientes -->
-    <section id="clientPanel" class="panel client-manager hidden">
-      <h2>Gestión de Clientes</h2>
-      <div class="client-toolbar">
-        <div class="field">
-          <input type="text" id="clientSearch" placeholder="Buscar cliente..." oninput="filterClients()">
+  <!-- PANEL PRINCIPAL (OCULTO HASTA LOGIN) -->
+  <section id="appPanel" class="hidden">
+    <div class="panel">
+      <div class="panel-heading">
+        <div>
+          <h2>Panel de Control</h2>
+          <p class="muted">Gestión optimizada con Cloudflare D1</p>
         </div>
-        <button class="primary" onclick="toggleClientForm()">Añadir Cliente</button>
-        <span class="client-count" id="clientCountText">Total: 0 clientes</span>
+        <div class="toolbar">
+          <button type="button" class="light" onclick="loadDashboardData()">Actualizar Datos</button>
+          <button type="button" class="danger" onclick="handleLogout()">Cerrar Sesión</button>
+        </div>
       </div>
+      <div id="appStatus" class="status hidden"></div>
+      
+      <div class="stats">
+        <div class="stat stat-accent">
+          <div class="stat-label">Facturas Emitidas</div>
+          <strong id="statTotalInvoices">0</strong>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Total Facturado</div>
+          <strong id="statTotalAmount">0,00 €</strong>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Clientes Registrados</div>
+          <strong id="statTotalClients">0</strong>
+        </div>
+      </div>
+    </div>
 
-      <div id="clientFormContainer" class="hidden" style="margin-top:15px;">
-        <h3>Datos del Cliente</h3>
-        <form id="clientForm" onsubmit="event.preventDefault(); saveClient();">
-          <input type="hidden" id="clientId">
-          <div class="client-form-grid">
-            <div class="field">
-              <label for="clientName">Nombre / Razón Social *</label>
-              <input type="text" id="clientName" required>
-            </div>
-            <div class="field">
-              <label for="clientNif">NIF / CIF *</label>
-              <input type="text" id="clientNif" required>
-            </div>
-            <div class="field full">
-              <label for="clientAddress">Dirección Completa</label>
-              <input type="text" id="clientAddress">
-            </div>
-            <div class="field">
-              <label for="clientPhone">Teléfono</label>
-              <input type="tel" id="clientPhone">
-            </div>
-            <div class="field">
-              <label for="clientEmail">Email</label>
-              <input type="email" id="clientEmail">
-            </div>
+    <!-- SECCIÓN DE FACTURACIÓN Y NUEVA FACTURA -->
+    <div class="panel">
+      <h3>Crear / Editar Factura</h3>
+      <form id="invoiceForm" onsubmit="saveInvoice(event)">
+        <div class="grid">
+          <div class="field">
+            <label for="invNumber">Número de Factura</label>
+            <input type="text" id="invNumber" required placeholder="Ej: 2026-001">
           </div>
-          <div class="actions" style="margin-top:15px;">
-            <button type="submit" class="primary">Guardar Cliente</button>
-            <button type="button" class="light" onclick="toggleClientForm(false)">Cancelar</button>
+          <div class="field">
+            <label for="invDate">Fecha de Emisión</label>
+            <input type="date" id="invDate" required>
           </div>
-        </form>
+          <div class="field">
+            <label for="invClient">Cliente</label>
+            <select id="invClient" required onchange="fillClientData()">
+              <option value="">Selecciona un cliente...</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="invStatus">Estado</label>
+            <select id="invStatus">
+              <option value="draft">Borrador</option>
+              <option value="issued">Emitida</option>
+              <option value="void">Anulada</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:15px;">
+          <label for="invWorkDesc">Descripción de los Trabajos / Obra</label>
+          <textarea id="invWorkDesc" placeholder="Detalle de la obra, reformas o servicios realizados..."></textarea>
+        </div>
+
         <div class="divider"></div>
-      </div>
+        <h3>Conceptos e Ítems</h3>
+        <div id="itemsContainer">
+          <!-- Los ítems se cargan dinámicamente -->
+        </div>
+        <button type="button" class="light" onclick="addItemRow()">+ Añadir Concepto</button>
 
-      <div class="client-list" id="clientList"></div>
-    </section>
+        <div class="totals" style="margin-top:20px;">
+          <div class="total-line"><span>Subtotal</span><strong id="subtotalAmount">0,00 €</strong></div>
+          <div class="total-line"><span>IVA (21%)</span><strong id="ivaAmount">0,00 €</strong></div>
+          <div class="total-line"><span>IRPF (15%)</span><strong id="ipfAmount">0,00 €</strong></div>
+          <div class="grand"><span>Total</span><strong id="grandTotalAmount">0,00 €</strong></div>
+        </div>
 
-    <!-- Formularios y Listados de Facturación -->
-    <section id="invoiceListPanel" class="panel hidden">
-      <h2>Historial de Facturas</h2>
+        <div class="toolbar" style="margin-top:20px;">
+          <button type="submit" class="primary">Guardar en D1</button>
+          <button type="button" class="light" onclick="resetInvoiceForm()">Limpiar Formulario</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- LISTADO DE FACTURAS -->
+    <div class="panel">
+      <h3>Historial de Facturas</h3>
       <div class="table-wrap">
         <table>
           <thead>
@@ -490,123 +391,83 @@ tbody tr:hover{background:#fafbfd}
               <th>Nº Factura</th>
               <th>Fecha</th>
               <th>Cliente</th>
-              <th>Base Imponible</th>
               <th>Total</th>
               <th>Estado</th>
-              <th>Acciones</th>
+              <th class="right">Acciones</th>
             </tr>
           </thead>
-          <tbody id="invoiceTableBody">
-            <tr>
-              <td colspan="7" class="empty-state">No hay facturas registradas.</td>
-            </tr>
+          <tbody id="invoicesTableBody">
+            <tr><td colspan="6" class="empty-state">Cargando facturas desde Cloudflare D1...</td></tr>
           </tbody>
         </table>
       </div>
-    </section>
+    </div>
 
-    <!-- Editor de Facturas -->
-    <section id="invoiceFormPanel" class="panel hidden">
-      <div class="panel-heading">
-        <h2 id="formTitle">Nueva Factura</h2>
-        <button class="light" onclick="showInvoiceList()">Volver al Listado</button>
+    <!-- GESTIÓN DE CLIENTES -->
+    <div class="panel">
+      <h3>Gestión de Clientes</h3>
+      <div class="client-manager">
+        <form id="clientForm" onsubmit="saveClient(event)">
+          <input type="hidden" id="clientId">
+          <div class="client-form-grid">
+            <div class="field">
+              <label for="clientName">Nombre / Razón Social</label>
+              <input type="text" id="clientName" required placeholder="Nombre del cliente o empresa">
+            </div>
+            <div class="field">
+              <label for="clientNif">NIF / CIF</label>
+              <input type="text" id="clientNif" required placeholder="12345678X">
+            </div>
+            <div class="field full">
+              <label for="clientAddress">Dirección Completa</label>
+              <input type="text" id="clientAddress" required placeholder="Calle, número, código postal, ciudad">
+            </div>
+            <div class="field">
+              <label for="clientEmail">Correo Electrónico</label>
+              <input type="email" id="clientEmail" placeholder="cliente@correo.com">
+            </div>
+            <div class="field">
+              <label for="clientPhone">Teléfono</label>
+              <input type="text" id="clientPhone" placeholder="+34 600000000">
+            </div>
+          </div>
+          <div class="toolbar" style="margin-top:14px;">
+            <button type="submit" class="orange">Guardar Cliente</button>
+            <button type="button" class="light" onclick="resetClientForm()">Cancelar</button>
+          </div>
+        </form>
       </div>
 
-      <form id="invoiceForm" onsubmit="event.preventDefault();">
-        <input type="hidden" id="invoiceId">
+      <div id="clientsList" class="client-list" style="margin-top:20px;">
+        <!-- Tarjetas de clientes -->
+      </div>
+    </div>
 
-        <div class="grid">
-          <div class="field">
-            <label for="invNumber">Número de Factura</label>
-            <input type="text" id="invNumber" required>
-          </div>
-          <div class="field">
-            <label for="invDate">Fecha de Emisión</label>
-            <input type="date" id="invDate" required>
-          </div>
-          <div class="field full">
-            <label for="invClientSelect">Seleccionar Cliente</label>
-            <select id="invClientSelect" onchange="loadSelectedClientData()">
-              <option value="">-- Elija un cliente o introduzca manualmente --</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="invClientName">Nombre del Cliente</label>
-            <input type="text" id="invClientName" required>
-          </div>
-          <div class="field">
-            <label for="invClientNif">NIF/CIF del Cliente</label>
-            <input type="text" id="invClientNif" required>
-          </div>
-          <div class="field full">
-            <label for="invClientAddr">Dirección del Cliente</label>
-            <input type="text" id="invClientAddr">
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <h3>Conceptos / Líneas de Trabajo</h3>
-        <div id="itemsContainer"></div>
-
-        <button type="button" class="light" style="margin-top:10px;" onclick="addItemRow()">+ Añadir Línea</button>
-
-        <div class="divider"></div>
-
-        <div class="totals">
-          <div class="total-line">
-            <span>Base Imponible:</span>
-            <strong id="subtotalDisplay">0,00 €</strong>
-          </div>
-          <div class="total-line">
-            <span>IVA (21%):</span>
-            <strong id="vatDisplay">0,00 €</strong>
-          </div>
-          <div class="grand">
-            <span>TOTAL:</span>
-            <strong id="totalDisplay">0,00 €</strong>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="field">
-          <label for="invNotes">Observaciones / Notas de Pago</label>
-          <textarea id="invNotes" placeholder="Condiciones de pago, IBAN, etc."></textarea>
-        </div>
-
-        <div class="actions" style="margin-top:20px;">
-          <button type="button" class="primary" onclick="saveInvoiceDraft()">Guardar Borrador</button>
-          <button type="button" class="success" onclick="previewInvoice()">Vista Previa / Imprimir</button>
-          <button type="button" class="light" onclick="showInvoiceList()">Cancelar</button>
-        </div>
-      </form>
-    </section>
-
-    <!-- Documento Imprimible (Paper Preview) -->
-    <section id="previewPanel" class="panel hidden">
+    <!-- VISTA PREVIA DE FACTURA (PAPEL A4) -->
+    <div class="panel">
       <div class="preview-toolbar">
-        <button class="light" onclick="showInvoiceForm()">Volver a Edición</button>
+        <h3>Vista Previa de Impresión / PDF</h3>
         <div class="toolbar">
-          <button class="primary" onclick="window.print()">Imprimir / Guardar PDF</button>
+          <button type="button" class="success" onclick="window.print()">Imprimir / Guardar PDF</button>
         </div>
       </div>
-
+      
       <div id="paper">
         <div class="paper-top"></div>
         <div class="paper-head">
           <div class="brand">
-            <div class="mark">RGL</div>
+            <div class="mark">RM</div>
             <div>
-              <h2>RGL Mihai</h2>
+              <h2>RGL MIHAI</h2>
               <p>ALBAÑILERÍA, REFORMAS, CONSTRUCCIÓN Y LIMPIEZAS</p>
             </div>
           </div>
           <div class="doc">
             <div class="doc-title">FACTURA</div>
-            <div class="doc-number" id="pDocNumber">Nº: -</div>
+            <div class="doc-tag" id="previewTag">BORRADOR</div>
+            <div class="doc-number" id="previewInvNum">---</div>
             <div class="doc-meta">
-              <span class="meta-row">Fecha: <strong id="pDocDate">-</strong></span>
+              <span class="meta-row">Fecha: <strong id="previewDate">---</strong></span>
             </div>
           </div>
         </div>
@@ -615,110 +476,519 @@ tbody tr:hover{background:#fafbfd}
           <div class="party">
             <div class="party-title">EMISOR</div>
             <strong>RGL Mihai</strong>
-            <div class="party-lines">Servicios de Construcción y Reformas</div>
+            <div class="party-lines">NIF: XXXXXXXXX<br>España<br>rgl.mihai@constructora.com</div>
           </div>
           <div class="party client">
             <div class="party-title">CLIENTE</div>
-            <strong id="pClientName">-</strong>
-            <div class="party-lines" id="pClientDetails">-</div>
+            <strong id="prevClientName">Selecciona un cliente</strong>
+            <div class="party-lines" id="prevClientDetails">Dirección y NIF del cliente...</div>
           </div>
+        </div>
+
+        <div class="workbox">
+          <div class="label">DESCRIPCIÓN DE LOS TRABAJOS</div>
+          <div class="desc" id="prevWorkDesc">Sin descripción de obra especificada.</div>
         </div>
 
         <table class="paper-table">
           <thead>
             <tr>
-              <th>Descripción</th>
+              <th>Concepto</th>
               <th>Cant.</th>
-              <th>Precio Un.</th>
-              <th>Dto.</th>
-              <th>Impuestos</th>
+              <th>Precio</th>
+              <th>IVA</th>
               <th>Total</th>
             </tr>
           </thead>
-          <tbody id="pTableBody"></tbody>
+          <tbody id="prevItemsTable">
+            <!-- Ítems de la preview -->
+          </tbody>
         </table>
 
         <div class="bottom-grid">
           <div class="bankbox">
-            <h3>DATOS DE PAGO</h3>
-            <p id="pNotes">Transferencia bancaria.</p>
+            <h3>DATOS BANCARIOS / PAGO</h3>
+            <p><strong>Banco:</strong> ES00 0000 0000 0000 0000 0000</p>
+            <p><strong>Titular:</strong> RGL Mihai</p>
+            <p class="small muted">Por favor, indique el número de factura en el concepto de la transferencia.</p>
           </div>
           <div class="paper-totals">
-            <div class="total-line">
-              <span>Base Imponible:</span>
-              <strong id="pSubtotal">0,00 €</strong>
-            </div>
-            <div class="total-line">
-              <span>IVA (21%):</span>
-              <strong id="pVat">0,00 €</strong>
-            </div>
-            <div class="grand">
-              <span>TOTAL:</span>
-              <strong id="pTotal">0,00 €</strong>
-            </div>
+            <div class="total-line"><span>Subtotal</span><strong id="prevSubtotal">0,00 €</strong></div>
+            <div class="total-line"><span>IVA (21%)</span><strong id="prevIva">0,00 €</strong></div>
+            <div class="total-line"><span>IRPF (15%)</span><strong id="prevIpf">0,00 €</strong></div>
+            <div class="grand"><span>Total a Pagar</span><strong id="prevGrand">0,00 €</strong></div>
           </div>
         </div>
 
         <div class="paper-footer">
-          <div>Gracias por confiar en RGL Mihai.</div>
-          <div class="footer-thanks" style="text-align:right;">Documento expedido conforme a la legislación vigente.</div>
+          <div>RGL Mihai -- Servicios profesionales de construcción y reformas</div>
+          <div class="right">Página 1 de 1</div>
         </div>
       </div>
-    </section>
-  </div>
+    </div>
+  </section>
 </main>
 
 <script>
-/* Lógica básica de arranque y gestión de estado visual */
-function showInvoiceForm() {
-  hideAllPanels();
-  document.getElementById('invoiceFormPanel').classList.remove('hidden');
-}
+let authToken = localStorage.getItem("rgl_token") || "";
+let clientsData = [];
+let invoicesData = [];
 
-function showClientManager() {
-  hideAllPanels();
-  document.getElementById('clientPanel').classList.remove('hidden');
-}
-
-function showInvoiceList() {
-  hideAllPanels();
-  document.getElementById('invoiceListPanel').classList.remove('hidden');
-}
-
-function hideAllPanels() {
-  document.getElementById('invoiceFormPanel').classList.add('hidden');
-  document.getElementById('clientPanel').classList.add('hidden');
-  document.getElementById('invoiceListPanel').classList.add('hidden');
-  document.getElementById('previewPanel').classList.add('hidden');
-}
-
-function toggleClientForm(show) {
-  const container = document.getElementById('clientFormContainer');
-  if (show === undefined) {
-    container.classList.toggle('hidden');
+document.addEventListener("DOMContentLoaded", () => {
+  if (authToken) {
+    checkTokenAndInit();
   } else {
-    if (show) container.classList.remove('hidden');
-    else container.classList.add('hidden');
+    showLogin();
   }
-}
-
-function previewInvoice() {
-  hideAllPanels();
-  document.getElementById('previewPanel').classList.remove('hidden');
-}
-
-/* Eventos iniciales */
-document.addEventListener('DOMContentLoaded', () => {
-  // Manejador del login (Simulación frontend)
-  const loginForm = document.getElementById('loginForm');
-  if (loginForm) {
-    loginForm.addEventListener('submit', () => {
-      document.getElementById('loginPanel').classList.add('hidden');
-      document.getElementById('appContent').classList.remove('hidden');
-      showInvoiceList();
-    });
-  }
+  setupItemRowCalculations();
 });
+
+function showLogin() {
+  document.getElementById("loginPanel").classList.remove("hidden");
+  document.getElementById("appPanel").classList.add("hidden");
+}
+
+function showApp() {
+  document.getElementById("loginPanel").classList.add("hidden");
+  document.getElementById("appPanel").classList.remove("hidden");
+  loadDashboardData();
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const pwd = document.getElementById("accessPassword").value;
+  const statusEl = document.getElementById("loginStatus");
+  statusEl.classList.add("hidden");
+
+  try {
+    const res = await fetch("/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: pwd })
+    });
+    const data = await res.json();
+    if (res.ok && data.token) {
+      authToken = data.token;
+      localStorage.setItem("rgl_token", authToken);
+      showApp();
+    } else {
+      throw new Error(data.error || "Contraseña incorrecta");
+    }
+  } catch (err) {
+    statusEl.textContent = err.message;
+    statusEl.classList.remove("hidden");
+  }
+}
+
+function handleLogout() {
+  authToken = "";
+  localStorage.removeItem("rgl_token");
+  showLogin();
+}
+
+async function checkTokenAndInit() {
+  try {
+    const res = await fetch("/api/verify", {
+      headers: { "Authorization": "Bearer " + authToken }
+    });
+    if (res.ok) {
+      showApp();
+    } else {
+      handleLogout();
+    }
+  } catch {
+    handleLogout();
+  }
+}
+
+async function apiFetch(url, options = {}) {
+  options.headers = options.headers || {};
+  options.headers["Authorization"] = "Bearer " + authToken;
+  if (options.body && typeof options.body === "object") {
+    options.headers["Content-Type"] = "application/json";
+    options.body = JSON.stringify(options.body);
+  }
+  const res = await fetch(url, options);
+  if (res.status === 401) {
+    handleLogout();
+    throw new Error("Sesión caducada");
+  }
+  return res;
+}
+
+async function loadDashboardData() {
+  try {
+    const [resClients, resInvoices] = await Promise.all([
+      apiFetch("/api/clients"),
+      apiFetch("/api/invoices")
+    ]);
+    clientsData = await resClients.json();
+    invoicesData = await resInvoices.json();
+
+    renderClients();
+    renderInvoices();
+    updateStats();
+    populateClientSelects();
+    if (document.getElementById("itemsContainer").children.length === 0) {
+      addItemRow();
+    }
+  } catch (err) {
+    showStatus("Error al cargar datos desde Cloudflare D1: " + err.message, true);
+  }
+}
+
+function showStatus(msg, isError = false) {
+  const el = document.getElementById("appStatus");
+  el.textContent = msg;
+  el.className = "status " + (isError ? "error" : "");
+  el.classList.remove("hidden");
+  setTimeout(() => el.classList.add("hidden"), 5000);
+}
+
+function updateStats() {
+  document.getElementById("statTotalInvoices").textContent = invoicesData.length;
+  const totalAmount = invoicesData.reduce((acc, inv) => acc + (Number(inv.total) || 0), 0);
+  document.getElementById("statTotalAmount").textContent = totalAmount.toLocaleString("es-ES", {style: "currency", currency: "EUR"});
+  document.getElementById("statTotalClients").textContent = clientsData.length;
+}
+
+/* GESTIÓN DE CLIENTES */
+function populateClientSelects() {
+  const select = document.getElementById("invClient");
+  const currentVal = select.value;
+  select.innerHTML = '<option value="">Selecciona un cliente...</option>';
+  clientsData.forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c.id;
+    opt.textContent = `${c.name} (NIF: ${c.nif})`;
+    select.appendChild(opt);
+  });
+  select.value = currentVal;
+}
+
+function renderClients() {
+  const container = document.getElementById("clientsList");
+  if (clientsData.length === 0) {
+    container.innerHTML = '<div class="empty-state">No hay clientes registrados en la base de datos D1.</div>';
+    return;
+  }
+  container.innerHTML = clientsData.map(c => `
+    <div class="client-card">
+      <h3>${escapeHtml(c.name)}</h3>
+      <div class="client-meta">
+        <strong>NIF:</strong> ${escapeHtml(c.nif)}<br>
+        <strong>Dir:</strong> ${escapeHtml(c.address)}<br>
+        <strong>Email:</strong> ${escapeHtml(c.email || '---')} | <strong>Tel:</strong> ${escapeHtml(c.phone || '---')}
+      </div>
+      <div class="client-card-actions">
+        <button type="button" class="light" onclick="editClient('${c.id}')">Editar</button>
+        <button type="button" class="danger" onclick="deleteClient('${c.id}')">Eliminar</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function resetClientForm() {
+  document.getElementById("clientId").value = "";
+  document.getElementById("clientForm").reset();
+}
+
+async function saveClient(e) {
+  e.preventDefault();
+  const id = document.getElementById("clientId").value;
+  const payload = {
+    name: document.getElementById("clientName").value,
+    nif: document.getElementById("clientNif").value,
+    address: document.getElementById("clientAddress").value,
+    email: document.getElementById("clientEmail").value,
+    phone: document.getElementById("clientPhone").value
+  };
+
+  try {
+    const url = id ? `/api/clients/${id}` : "/api/clients";
+    const method = id ? "PUT" : "POST";
+    const res = await apiFetch(url, { method, body: payload });
+    if (!res.ok) throw new Error("Error al guardar cliente");
+    
+    showStatus("Cliente guardado correctamente en D1.");
+    resetClientForm();
+    loadDashboardData();
+  } catch (err) {
+    showStatus(err.message, true);
+  }
+}
+
+function editClient(id) {
+  const c = clientsData.find(x => x.id == id);
+  if (!c) return;
+  document.getElementById("clientId").value = c.id;
+  document.getElementById("clientName").value = c.name;
+  document.getElementById("clientNif").value = c.nif;
+  document.getElementById("clientAddress").value = c.address;
+  document.getElementById("clientEmail").value = c.email || "";
+  document.getElementById("clientPhone").value = c.phone || "";
+  window.scrollTo({ top: document.getElementById("clientForm").offsetTop - 100, behavior: "smooth" });
+}
+
+async function deleteClient(id) {
+  if (!confirm("¿Estás seguro de eliminar este cliente?")) return;
+  try {
+    const res = await apiFetch(`/api/clients/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("No se pudo eliminar el cliente");
+    showStatus("Cliente eliminado.");
+    loadDashboardData();
+  } catch (err) {
+    showStatus(err.message, true);
+  }
+}
+
+/* GESTIÓN DE ÍTEMS Y FACTURAS */
+function addItemRow(itemData = {}) {
+  const container = document.getElementById("itemsContainer");
+  const div = document.createElement("div");
+  div.className = "itemrow";
+  div.innerHTML = `
+    <div class="field itemdesc">
+      <label>Concepto</label>
+      <input type="text" class="item-desc" required placeholder="Descripción del servicio o material" value="${escapeHtml(itemData.description || '')}">
+    </div>
+    <div class="field">
+      <label>Cantidad</label>
+      <input type="number" step="any" class="item-qty" required value="${itemData.quantity !== undefined ? itemData.quantity : 1}" oninput="calculateTotals()">
+    </div>
+    <div class="field">
+      <label>Precio (€)</label>
+      <input type="number" step="any" class="item-price" required value="${itemData.price !== undefined ? itemData.price : 0}" oninput="calculateTotals()">
+    </div>
+    <div class="field">
+      <label>IVA %</label>
+      <input type="number" step="any" class="item-iva" required value="${itemData.iva !== undefined ? itemData.iva : 21}" oninput="calculateTotals()">
+    </div>
+    <div class="field">
+      <label>Total</label>
+      <input type="text" class="iline item-total" readonly value="0,00 €">
+    </div>
+    <button type="button" class="removeitem" onclick="this.parentElement.remove(); calculateTotals();" title="Eliminar">&times;</button>
+  `;
+  container.appendChild(div);
+  calculateTotals();
+}
+
+function setupItemRowCalculations() {
+  // Event delegation o listeners automáticos mediante oninput en los inputs
+}
+
+function calculateTotals() {
+  const rows = document.querySelectorAll(".itemrow");
+  let subtotal = 0;
+  let totalIva = 0;
+  let previewItemsHtml = "";
+
+  rows.forEach(row => {
+    const qty = parseFloat(row.querySelector(".item-qty").value) || 0;
+    const price = parseFloat(row.querySelector(".item-price").value) || 0;
+    const ivaPct = parseFloat(row.querySelector(".item-iva").value) || 21;
+    
+    const lineSubtotal = qty * price;
+    const lineIva = lineSubtotal * (ivaPct / 100);
+    const lineTotal = lineSubtotal + lineIva;
+
+    row.querySelector(".item-total").value = lineTotal.toLocaleString("es-ES", {style: "currency", currency: "EUR"});
+    subtotal += lineSubtotal;
+    totalIva += lineIva;
+
+    const desc = row.querySelector(".item-desc").value || "Concepto";
+    previewItemsHtml += `
+      <tr>
+        <td>${escapeHtml(desc)}</td>
+        <td>${qty}</td>
+        <td>${price.toFixed(2)} €</td>
+        <td>${ivaPct}%</td>
+        <td>${lineTotal.toFixed(2)} €</td>
+      </tr>
+    `;
+  });
+
+  const ipf = subtotal * 0.15; // IRPF 15% por defecto aplicable en autónomos si procede
+  const grandTotal = subtotal + totalIva - ipf;
+
+  document.getElementById("subtotalAmount").textContent = subtotal.toLocaleString("es-ES", {style: "currency", currency: "EUR"});
+  document.getElementById("ivaAmount").textContent = totalIva.toLocaleString("es-ES", {style: "currency", currency: "EUR"});
+  document.getElementById("ipfAmount").textContent = ipf.toLocaleString("es-ES", {style: "currency", currency: "EUR"});
+  document.getElementById("grandTotalAmount").textContent = grandTotal.toLocaleString("es-ES", {style: "currency", currency: "EUR"});
+
+  // Actualizar previsualización papel A4
+  document.getElementById("prevSubtotal").textContent = subtotal.toLocaleString("es-ES", {style: "currency", currency: "EUR"});
+  document.getElementById("prevIva").textContent = totalIva.toLocaleString("es-ES", {style: "currency", currency: "EUR"});
+  document.getElementById("prevIpf").textContent = ipf.toLocaleString("es-ES", {style: "currency", currency: "EUR"});
+  document.getElementById("prevGrand").textContent = grandTotal.toLocaleString("es-ES", {style: "currency", currency: "EUR"});
+  document.getElementById("prevItemsTable").innerHTML = previewItemsHtml || '<tr><td colspan="5" class="muted" style="text-align:center">Sin conceptos</td></tr>';
+
+  updatePreviewHeader();
+}
+
+function updatePreviewHeader() {
+  const num = document.getElementById("invNumber").value || "---";
+  const date = document.getElementById("invDate").value || "---";
+  const status = document.getElementById("invStatus").value;
+  const desc = document.getElementById("invWorkDesc").value || "Sin descripción de obra especificada.";
+  const clientSel = document.getElementById("invClient");
+  const clientId = clientSel.value;
+
+  document.getElementById("previewInvNum").textContent = num;
+  document.getElementById("previewDate").textContent = date ? new Date(date).toLocaleDateString("es-ES") : "---";
+  document.getElementById("prevWorkDesc").textContent = desc;
+
+  const tagEl = document.getElementById("previewTag");
+  if (status === 'issued') { tagEl.textContent = 'EMITIDA'; tagEl.style.background = 'var(--green)'; }
+  else if (status === 'void') { tagEl.textContent = 'ANULADA'; tagEl.style.background = 'var(--red)'; }
+  else { tagEl.textContent = 'BORRADOR'; tagEl.style.background = 'var(--navy)'; }
+
+  if (clientId) {
+    const c = clientsData.find(x => x.id == clientId);
+    if (c) {
+      document.getElementById("prevClientName").textContent = c.name;
+      document.getElementById("prevClientDetails").innerHTML = `NIF: ${escapeHtml(c.nif)}<br>${escapeHtml(c.address)}<br>${escapeHtml(c.email || '')} ${escapeHtml(c.phone || '')}`;
+    }
+  } else {
+    document.getElementById("prevClientName").textContent = "Selecciona un cliente";
+    document.getElementById("prevClientDetails").textContent = "Dirección y NIF del cliente...";
+  }
+}
+
+document.getElementById("invNumber").addEventListener("input", updatePreviewHeader);
+document.getElementById("invDate").addEventListener("input", updatePreviewHeader);
+document.getElementById("invStatus").addEventListener("change", updatePreviewHeader);
+document.getElementById("invWorkDesc").addEventListener("input", updatePreviewHeader);
+
+function fillClientData() {
+  updatePreviewHeader();
+}
+
+function resetInvoiceForm() {
+  document.getElementById("invoiceForm").reset();
+  document.getElementById("itemsContainer").innerHTML = "";
+  addItemRow();
+  calculateTotals();
+}
+
+async function saveInvoice(e) {
+  e.preventDefault();
+  const rows = document.querySelectorAll(".itemrow");
+  if (rows.length === 0) {
+    showStatus("Añade al menos un concepto a la factura.", true);
+    return;
+  }
+
+  const items = [];
+  rows.forEach(row => {
+    items.push({
+      description: row.querySelector(".item-desc").value,
+      quantity: parseFloat(row.querySelector(".item-qty").value) || 0,
+      price: parseFloat(row.querySelector(".item-price").value) || 0,
+      iva: parseFloat(row.querySelector(".item-iva").value) || 21
+    });
+  });
+
+  const payload = {
+    number: document.getElementById("invNumber").value,
+    date: document.getElementById("invDate").value,
+    clientId: document.getElementById("invClient").value,
+    status: document.getElementById("invStatus").value,
+    workDescription: document.getElementById("invWorkDesc").value,
+    items: items
+  };
+
+  try {
+    const res = await apiFetch("/api/invoices", { method: "POST", body: payload });
+    if (!res.ok) throw new Error("Error al guardar la factura en D1");
+    
+    showStatus("Factura guardada correctamente en Cloudflare D1.");
+    resetInvoiceForm();
+    loadDashboardData();
+  } catch (err) {
+    showStatus(err.message, true);
+  }
+}
+
+function renderInvoices() {
+  const tbody = document.getElementById("invoicesTableBody");
+  if (invoicesData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No hay facturas registradas.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = invoicesData.map(inv => {
+    const client = clientsData.find(c => c.id == inv.clientId);
+    const clientName = client ? client.name : "Cliente desconocido";
+    let pillClass = "draft", pillText = "Borrador";
+    if (inv.status === 'issued') { pillClass = "issued"; pillText = "Emitida"; }
+    else if (inv.status === 'void') { pillClass = "void"; pillText = "Anulada"; }
+
+    return `
+      <tr>
+        <td><strong>${escapeHtml(inv.number)}</strong></td>
+        <td>${inv.date ? new Date(inv.date).toLocaleDateString("es-ES") : '---'}</td>
+        <td>${escapeHtml(clientName)}</td>
+        <td><strong>${(Number(inv.total) || 0).toLocaleString("es-ES", {style: "currency", currency: "EUR"})}</strong></td>
+        <td><span class="pill ${pillClass}">${pillText}</span></td>
+        <td class="right">
+          <button type="button" class="light" onclick="loadInvoiceToForm('${inv.id}')">Ver / Editar</button>
+          <button type="button" class="danger" onclick="deleteInvoice('${inv.id}')">Eliminar</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+async function loadInvoiceToForm(id) {
+  try {
+    const res = await apiFetch(`/api/invoices/${id}`);
+    if (!res.ok) throw new Error("No se pudo cargar la factura");
+    const inv = await res.json();
+
+    document.getElementById("invNumber").value = inv.number;
+    document.getElementById("invDate").value = inv.date;
+    document.getElementById("invClient").value = inv.clientId;
+    document.getElementById("invStatus").value = inv.status;
+    document.getElementById("invWorkDesc").value = inv.workDescription || "";
+
+    const container = document.getElementById("itemsContainer");
+    container.innerHTML = "";
+    if (inv.items && inv.items.length > 0) {
+      inv.items.forEach(item => addItemRow(item));
+    } else {
+      addItemRow();
+    }
+    calculateTotals();
+    window.scrollTo({ top: document.getElementById("invoiceForm").offsetTop - 100, behavior: "smooth" });
+    showStatus(`Factura ${inv.number} cargada en el formulario.`);
+  } catch (err) {
+    showStatus(err.message, true);
+  }
+}
+
+async function deleteInvoice(id) {
+  if (!confirm("¿Estás seguro de eliminar esta factura?")) return;
+  try {
+    const res = await apiFetch(`/api/invoices/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("No se pudo eliminar la factura");
+    showStatus("Factura eliminada.");
+    loadDashboardData();
+  } catch (err) {
+    showStatus(err.message, true);
+  }
+}
+
+function escapeHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 </script>
 </body>
 </html>
