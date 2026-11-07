@@ -65,7 +65,7 @@ async function route(request, env) {
         .bind(uid(),id,item.description,item.quantity,item.unit_price,item.vat_rate,item.quantity*item.unit_price*(1+item.vat_rate/100)).run();
       return json({ok:true,id,invoice_number:number,base_amount:base,vat_amount:vat,total_amount:total},201);
     }
-    const match=path.match(/^\\/api\\/invoices\\/([^/]+)$/);
+    const match = path.match(/^\/api\/invoices\/([^/]+)$/);
     if(match && request.method==="GET") {
       const invoice=await env.DB.prepare("SELECT i.*,c.name AS client_name,c.tax_id,c.address,c.postal_code,c.city,c.province FROM invoices i LEFT JOIN clients c ON c.id=i.client_id WHERE i.id=?").bind(match[1]).first();
       if(!invoice) return json({error:"Factura no encontrada."},404);
